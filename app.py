@@ -4,6 +4,10 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/')
+def home():
+    return "Welcome to the HomeDoc API!"
+
 @app.route('/users')
 def get_users():
     return jsonify([{"id": 1, "name": "Itsik"}])
