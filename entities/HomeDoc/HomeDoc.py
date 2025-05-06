@@ -5,12 +5,14 @@ from typing import List,Dict
 class HomeDoc: 
     id: int
     fatherId: int   
-    fatherInteriorEntityKey: str
     interiorEntityKey: str
+    fatherInteriorEntityKey: str
     createdAt: str
     updatedAt: str
     category: str
     type: str
     description: str
     extraData: List[Dict]
+    length: str
+    width: str
 
