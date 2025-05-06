@@ -22,7 +22,7 @@ print(doc.description)  # Some description
 
 @app.route('/')
 def home():
-    return "Welcome to the HomeDoc API!" + " " + doc
+    return "Welcome to the HomeDoc API!" + " " + str(doc)  
 
 @app.route('/users')
 def get_users():
