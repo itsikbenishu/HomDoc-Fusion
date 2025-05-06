@@ -22,7 +22,11 @@ print(doc.description)  # Some description
 
 @app.route('/')
 def home():
-    return "Welcome to the HomeDoc API!" + " " + str(doc)  
+    try:
+        return "Welcome to the HomeDoc API!" + " " + str(doc)  
+    except Exception as e:
+        print(f"נמצאה שגיאה: {e}")
+
 
 @app.route('/users')
 def get_users():
