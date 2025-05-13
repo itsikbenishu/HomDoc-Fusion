@@ -2,7 +2,7 @@ from abc import ABC,abstractmethod
 from Repository import Repository
 
 class Controller(ABC):
-    def __init__(self, repo, DB):
+    def __init__(self, repo):
         pass
 
     @abstractmethod
