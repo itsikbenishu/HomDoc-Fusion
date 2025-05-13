@@ -1,4 +1,4 @@
-from abstract import Repository
+from Abstracts import Repository
 from flask import jsonify
 
 class repo(Repository):

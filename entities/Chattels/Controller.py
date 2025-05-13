@@ -1,4 +1,4 @@
-from abstract import Controller
+from Abstracts import Controller
 
 class ctrl(Controller):
     def __init__(self, repo):
