@@ -1,6 +1,6 @@
 from Operation import Operation
 
-class Pipeline():
+class Pipeline:
     def __init__(self):
         self.operations = list()
         
