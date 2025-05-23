@@ -1,4 +1,8 @@
 from Abstracts import Controller
+from utils.decorators import singleton
+
+
+@singleton
 
 class ctrl(Controller):
     def __init__(self, repo):

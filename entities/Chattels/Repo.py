@@ -1,6 +1,9 @@
 from Abstracts import Repository
 from flask import jsonify
+from utils.decorators import singleton
 
+
+@singleton
 class repo(Repository):
     def __init__(self, DB):
         self.DB = DB
