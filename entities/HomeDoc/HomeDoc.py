@@ -3,6 +3,9 @@ from typing import List,Dict
 
 @dataclass
 class HomeDoc: 
+    __slots__ = ['id', 'fatherId', 'interiorEntityKey','fatherInteriorEntityKey', 
+                 'createdAt', 'updatedAt', 'category', 'type','description', 
+                 'extraData' , 'length', 'length', 'width']
     id: int
     fatherId: int   
     interiorEntityKey: str
