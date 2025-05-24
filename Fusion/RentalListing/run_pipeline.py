@@ -1,5 +1,6 @@
 
-from Fusion.RentalListing import FetchOper,Pipeline
+from .FetchOper import FetchOper
+from .Pipeline import Pipeline
 
 def run_pipeline(property_type):
     rentalListPipeline = Pipeline.RentalListPipeline()
