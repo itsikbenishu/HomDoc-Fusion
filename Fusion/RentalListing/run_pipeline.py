@@ -1,9 +1,9 @@
 
 from .FetchOper import FetchOper
-from .Pipeline import Pipeline
+from .Pipeline import RentalListPipeline
 
 def run_pipeline(property_type):
-    rentalListPipeline = Pipeline.RentalListPipeline()
+    rentalListPipeline = RentalListPipeline()
 
     rentalListPipeline.add_oper(FetchOper(property_type))
 
