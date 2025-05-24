@@ -2,7 +2,7 @@ import requests
 import json
 from datetime import datetime, date
 from urllib.parse import quote
-from Pipeline import Operation
+from Pipeline.Operation import Operation
 from Fusion.RentalListing.apiConfig import api_settings
 
 class FetchOper(Operation):
