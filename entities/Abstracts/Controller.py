@@ -1,5 +1,5 @@
 from abc import ABC,abstractmethod
-from Repository import Repository
+from .Repository import Repository
 
 class Controller(ABC):
     def __init__(self, repo):

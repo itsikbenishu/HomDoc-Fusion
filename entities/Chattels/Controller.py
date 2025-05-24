@@ -1,4 +1,4 @@
-from Abstracts import Controller
+from Abstracts.Controller import Controller
 from utils.decorators import singleton
 
 

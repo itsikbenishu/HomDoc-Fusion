@@ -1,4 +1,4 @@
-from Abstracts import Repository
+from Abstracts.Repository import Repository
 from flask import jsonify
 from utils.decorators import singleton
 

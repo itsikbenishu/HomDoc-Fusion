@@ -1,4 +1,4 @@
-from Operation import Operation
+from .Operation import Operation
 
 class Batch(Operation):
     def __init__(self, operation):
