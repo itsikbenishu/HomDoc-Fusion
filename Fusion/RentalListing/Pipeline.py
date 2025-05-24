@@ -1,4 +1,4 @@
-from Pipeline import Pipeline
+from Pipeline.Pipeline import Pipeline
 
 class RentalListPipeline(Pipeline):
     def __init__(self):
