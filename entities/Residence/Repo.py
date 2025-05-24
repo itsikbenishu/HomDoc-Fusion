@@ -6,7 +6,7 @@ from utils.decorators import singleton
 @singleton
 class repo(Repository):
     def __init__(self, DB):
-        self.DB = DB
+        super().__init__(DB)  
 
     def get_by_id(self, item_id):
         return jsonify({})

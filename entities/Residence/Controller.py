@@ -5,6 +5,7 @@ from utils.decorators import singleton
 @singleton
 class ctrl(Controller):
     def __init__(self, repo):
+        super().__init__()  
         self.repo = repo
 
     def get_by_id(self, item_id):

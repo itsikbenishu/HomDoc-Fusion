@@ -1,10 +1,12 @@
 from Operation import Operation
+
 class Batch(Operation):
     def __init__(self, operation):
         if not isinstance(operation, Operation):
             raise TypeError(f"operation must be an instance of Operation, got {type(operation).__name__}")
-        self.context = operation.context
-        self.operation = operation
+        super().__init__()  
+        self._context = operation._context
+        self._operation = operation
 
     def run(self, input):
         data = input
@@ -13,7 +15,7 @@ class Batch(Operation):
         output = list()
 
         for elem in data:
-            output.append(self.operation.run(elem))            
+            output.append(self._operation.run(elem))            
 
         return output
 

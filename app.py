@@ -1,6 +1,8 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from entities.HomeDoc import HomeDoc
+from Fusion import RentalListing
+
 app = Flask(__name__)
 CORS(app)
 
@@ -13,7 +15,8 @@ def home():
 
 
 @app.route('/fuse')
-def get_users():
+def run_fusion():
+    RentalListing.run_pipeline("Single Family")
     return jsonify([{"id": 1, "name": "Itsik"}])
 
 if __name__ == '__main__':

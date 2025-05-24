@@ -1,17 +1,17 @@
 
 class Operation:
     def __init__(self):
-        self.context = dict()
+        self._context = dict()
 
 
-    def run(self, input):
+    def run(self, input=None):
         data = input
         output = data
         return output
 
     def get_context(self):
-        return self.context
+        return self._context
 
     def set_context(self, context):
-        self.context = context
+        self._context = context
 
