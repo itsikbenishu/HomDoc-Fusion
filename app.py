@@ -9,6 +9,7 @@ CORS(app)
 @app.route('/')
 def home():
     try:
+        print(f"Welcome to the HomeDoc APIֱֱֱ!!!!!!!")
         return "Welcome to the HomeDoc API!" 
     except Exception as e:
         print(f"Error was found: {e}")
