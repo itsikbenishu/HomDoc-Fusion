@@ -1,7 +1,0 @@
-{
-  "limit": 500,
-  "offset": 1000,
-  "next_payment_date": "2025-06-14",
-  "api_calls_number": 12,
-  "api_calls_max_number": 50
-}
