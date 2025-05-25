@@ -3,7 +3,7 @@ import json
 from datetime import datetime, date
 from urllib.parse import quote
 from Pipeline.Operation import Operation
-from .apiConfig import api_settings
+from Fusion.RentalListing.apiConfig import api_settings
 
 class FetchOper(Operation):
     def __init__(self, property_type):
@@ -42,7 +42,7 @@ class FetchOper(Operation):
         print(output)
         return  output
 
-    def _fetch(property_type, limit, offset): 
+    def _fetch(self, property_type, limit, offset): 
         quoted_property_type = quote(property_type)
         url = f"{api_settings.RENTCAST_RENTAL_LISTING_API}?propertyType={quoted_property_type}&limit={limit}&offset={offset}"
         headers = {
@@ -55,7 +55,7 @@ class FetchOper(Operation):
         print(response.text)
         return response
 
-    def _is_payment_date_passed(payment_date):
+    def _is_payment_date_passed(self, payment_date):
         today = date.today()
         target_date = datetime.strptime(payment_date, "%Y-%m-%d").date()
 
