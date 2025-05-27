@@ -1,4 +1,4 @@
-from .Operation import Operation
+from Pipeline.Operation import Operation
 
 class Pipeline:
     def __init__(self):
@@ -22,9 +22,11 @@ class Pipeline:
     def run(self, input=None):
         prev_context = dict()
         cur = input
-        
+
         for operation in self._operations:
             operation.set_context(prev_context)
             cur = operation.run(cur)
             prev_context = operation.get_context()
 
+        output = cur
+        return output

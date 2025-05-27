@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Fusion App",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/app.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "FLASK_APP": "app.py",
+        "FLASK_ENV": "development",
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    }
+  ]
+}

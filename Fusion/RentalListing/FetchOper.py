@@ -16,7 +16,8 @@ class FetchOper(Operation):
     def run(self, input=None):
         res_select = select("SELECT * FROM rentcast_stats WHERE id = %s", (1,))
         rentcast_stats = res_select[0]
-
+        
+        print("current rentcast_stats:")
         print(rentcast_stats)
         limit = rentcast_stats["limit_value"]
         offset = rentcast_stats["offset_value"]
@@ -38,8 +39,9 @@ class FetchOper(Operation):
             update_row_by_id("rentcast_stats", rentcast_stats,1)
             output = response.text
 
+        print("new rentcast_stats:")
         print(rentcast_stats)
-        return  output
+        return output
 
     def _fetch(self, property_type, limit, offset): 
         quoted_property_type = quote(property_type)
@@ -51,7 +53,6 @@ class FetchOper(Operation):
 
         response = requests.get(url, headers=headers)
 
-        print(response.text)
         return response
 
     def _is_payment_date_passed(self, payment_date):

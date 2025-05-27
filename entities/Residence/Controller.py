@@ -1,4 +1,4 @@
-from Abstracts.Controller import Controller
+from entities.Abstracts.Controller import Controller
 from utils.decorators import singleton
 
 

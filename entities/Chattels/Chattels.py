@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from entities.HomeDoc import HomeDoc
+from entities.HomeDoc.HomeDoc import HomeDoc
 
 @dataclass(slots=True)
 class Chattels(HomeDoc):

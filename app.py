@@ -16,8 +16,11 @@ def home():
 
 @app.route('/fuse')
 def run_fusion():
-    run_pipeline("Single Family")
-    return jsonify([{"id": 1, "name": "Itsik"}])
+    # run_pipeline("Single Family")
+    # return jsonify([{"id": 1, "name": "Itsik"}])
+    res = run_pipeline("Single Family")
+    return jsonify(res)
+
 
 if __name__ == '__main__':
     app.run(debug=True, host="127.0.0.1", port=5000)

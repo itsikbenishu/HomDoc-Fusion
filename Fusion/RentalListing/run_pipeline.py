@@ -1,10 +1,12 @@
 
-from .FetchOper import FetchOper
-from .Pipeline import RentalListPipeline
+from Fusion.RentalListing.FetchOper import FetchOper
+from Fusion.RentalListing.Pipeline import RentalListPipeline
+from Fusion.RentalListing.TransformationOper import TransformationOper
 
 def run_pipeline(property_type):
-    rentalListPipeline = RentalListPipeline()
+    rental_list_pipeline = RentalListPipeline()
 
-    rentalListPipeline.add_oper(FetchOper(property_type))
+    rental_list_pipeline.add_oper(FetchOper(property_type))
+    rental_list_pipeline.add_oper(TransformationOper())
 
-    rentalListPipeline.run()
+    return rental_list_pipeline.run()

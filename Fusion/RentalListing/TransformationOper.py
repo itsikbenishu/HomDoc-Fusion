@@ -1,0 +1,57 @@
+from pydantic import ValidationError
+from Pipeline.Operation import Operation
+from Fusion.RentalListing.Transformation import property_listing_transfom
+
+class TransformationOper(Operation):
+    def __init__(self):
+        super().__init__()  
+
+    def _serialize_pydantic_error(self, validation_error):
+        def clean_error(err):
+            err = err.copy()
+            if "ctx" in err:
+                err["ctx"] = {
+                    k: str(v) if isinstance(v, Exception) else v
+                    for k, v in err["ctx"].items()
+                }
+            return err
+
+        return [clean_error(err) for err in validation_error.errors()]
+
+
+    def run(self, input=None):
+        property_listing = input
+
+        validated_listings = []
+        errors = []
+
+        for item in property_listing:
+            try:
+                listing = property_listing_transfom(item)
+                validated_listings.append(listing)
+            except ValidationError as e:
+                errors.append({
+                    "id": item.get("id"),
+                    "errors": self._serialize_pydantic_error(e)
+                })
+            except Exception as e:
+                errors.append({
+                    "id": item.get("id"),
+                    "error": str(e)  
+                })
+
+        # print(errors)
+        print(f"validated: {len(validated_listings)}")
+        print(f"error: {len(errors)}")
+        print(errors)
+
+        return {
+            "validated_listings": [listing.model_dump(mode="json") for listing in validated_listings],
+            "errors": errors
+        }
+
+        # return validated_listings
+
+
+
+
