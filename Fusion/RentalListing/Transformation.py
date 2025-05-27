@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, Field, EmailStr, field_serializer
 from typing import Optional, Dict
 from datetime import datetime
 
@@ -40,30 +40,16 @@ class HistoryItem(BaseModel):
     listedDate: Optional[datetime] = None
     removedDate: Optional[datetime] = None
     daysOnMarket: Optional[int] = None
-
-
-class Builder(BaseModel):
-    name: Optional[str] = None
-    development: Optional[str] = None
-    phone: Optional[str] = None
-    website: Optional[str] = None
     
 class PropertyListing(BaseModel):
-    id: str
+    rentcastId: str = Field(alias="id")
     formattedAddress: str
-    addressLine1: Optional[str]
-    addressLine2: Optional[str]
-    city: Optional[str] = None
-    state: str
-    zipCode: Optional[str] = None
     county: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
     propertyType: PropertyTypeEnum
-    bedrooms: Optional[int] = None
+    bedrooms: Optional[float] = None
     bathrooms: Optional[float] = None
-    squareFootage: Optional[int] = None
-    lotSize: Optional[int] = None
+    squareFootage: Optional[float] = None
+    lotSize: Optional[float] = None
     yearBuilt: Optional[int] = None
     hoa: Optional[HOA] = None
     status: Optional[ListingStatusEnum] = None
@@ -78,8 +64,32 @@ class PropertyListing(BaseModel):
     mlsNumber: Optional[str] = None
     listingAgent: Optional[Contact] = None
     listingOffice: Optional[Contact] = None
-    builder: Optional[Builder] = None
     history: Optional[Dict[str, HistoryItem]] = None
 
-property_listing_transfom = lambda property_listing: PropertyListing(**property_listing)
+    @field_serializer("squareFootage")
+    def serialize_square_footage(self, v):
+        if v is None:
+            return v
+        return round(v * 0.092903, 2)
+
+    @field_serializer("lotSize")
+    def serialize_lot_size(self, v):
+        if v is None:
+            return v
+        return round(v * 0.092903, 2)
+
+
+
+
+def filter_fields(property_listing):
+    exclude_fields = { "addressLine1", "addressLine2", "city", "state", "zipCode",  "builder", "latitude", "longitude" }
+
+    filtered_fields = {
+        field: value for field, value in property_listing.items() if field not in exclude_fields
+    }
+
+    return filtered_fields
+
+
+property_listing_transfom = lambda property_listing: PropertyListing(**filter_fields(property_listing))
 

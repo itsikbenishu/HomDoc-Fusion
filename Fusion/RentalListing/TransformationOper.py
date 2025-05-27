@@ -40,13 +40,12 @@ class TransformationOper(Operation):
                     "error": str(e)  
                 })
 
-        # print(errors)
         print(f"validated: {len(validated_listings)}")
         print(f"error: {len(errors)}")
         print(errors)
 
         return {
-            "validated_listings": [listing.model_dump(mode="json") for listing in validated_listings],
+            "validated_listings": validated_listings,
             "errors": errors
         }
 
