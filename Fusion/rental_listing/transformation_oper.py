@@ -1,6 +1,6 @@
 from pydantic import ValidationError
-from Pipeline.Operation import Operation
-from Fusion.RentalListing.Transformation import property_listing_transfom
+from pipeline.operation import Operation
+from fusion.rental_listing.transformation import property_listing_transfom
 
 class TransformationOper(Operation):
     def __init__(self):

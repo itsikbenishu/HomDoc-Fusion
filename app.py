@@ -1,26 +1,52 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
-from entities.HomeDoc import HomeDoc
-from Fusion.RentalListing.run_pipeline import run_pipeline
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from urllib.parse import quote_plus
+import uvicorn
 
-app = Flask(__name__)
-CORS(app)
+from app_config import app_settings
+from db_config import db_settings
+from fusion.rental_listing.run_pipeline import run_pipeline
 
-@app.route('/')
-def home():
+app = FastAPI()
+
+templates = Jinja2Templates(directory="templates")
+
+password_encoded = quote_plus(db_settings.POSTGRES_PASSWORD)
+DATABASE_URL = f"postgresql://{db_settings.POSTGRES_USER}:{password_encoded}@{db_settings.POSTGRES_HOST}:{db_settings.POSTGRES_PORT}/{db_settings.POSTGRES_DB}"
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=app_settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+def get_db():
+    db = SessionLocal()
     try:
-        return "Welcome to the HomeDoc API!" 
+        yield db
+    finally:
+        db.close()
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    try:
+        return templates.TemplateResponse("welcome.html", {"request": request})
     except Exception as e:
-        print(f"Error was found: {e}")
+        return HTMLResponse(f"Error: {e}", status_code=500)
 
+@app.get("/fuse")
+async def run_fusion():
+    run_pipeline("Single Family")
+    return [{"id": 1, "name": "Itsik"}]
 
-@app.route('/fuse')
-def run_fusion():
-    # run_pipeline("Single Family")
-    # return jsonify([{"id": 1, "name": "Itsik"}])
-    res = run_pipeline("Single Family")
-    return jsonify(res)
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host="127.0.0.1", port=5000)
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="127.0.0.1", port=5000, reload=True)

@@ -1,4 +1,4 @@
-from entities.Abstracts.Service import Service
+from entities.abstracts.service import Service
 from utils.decorators import singleton
 
 

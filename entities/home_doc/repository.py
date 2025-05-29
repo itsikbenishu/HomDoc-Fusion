@@ -1,4 +1,4 @@
-from entities.Abstracts.Repository import Repository
+from entities.abstracts.repository import Repository
 from flask import jsonify
 from utils.decorators import singleton
 

@@ -2,15 +2,15 @@ import requests
 import json
 from datetime import datetime, date
 from urllib.parse import quote
-from Pipeline.Operation import Operation
-from entities.postgresDB import select, update_row_by_id
-from Fusion.RentalListing.apiConfig import api_settings
+from pipeline.operation import Operation
+from entities.utils.constants_db import select, update_row_by_id
+from fusion.rental_listing.api_config import api_settings
 
 class FetchOper(Operation):
     def __init__(self, property_type):
         super().__init__()  
         self._property_type = property_type
-        self._folder = "Fusion/RentalListing"
+        self._folder = "fusion/rental_listing"
         self._api_example_file = "api_example"
 
     def run(self, input=None):
@@ -36,7 +36,7 @@ class FetchOper(Operation):
             response = self._fetch(self._property_type, limit, offset )
             rentcast_stats["api_calls_number"] = rentcast_stats["api_calls_number"] + 1
             rentcast_stats["offset"] = offset +  limit
-            update_row_by_id("rentcast_stats", rentcast_stats,1)
+            update_row_by_id("rentcast_stats", rentcast_stats, 1)
             output = response.text
 
         print("new rentcast_stats:")
