@@ -1,9 +1,8 @@
 from abc import ABC,abstractmethod
-from entities.Abstracts.Repository import Repository
 
-class Controller(ABC):
-    def __init__(self, repo):
-        pass
+class Service(ABC):
+    def __init__(self):
+        self.repo = None
 
     @abstractmethod
     def get_by_id(self, item_id):

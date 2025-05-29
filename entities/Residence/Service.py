@@ -1,10 +1,9 @@
-from entities.Abstracts.Controller import Controller
+from entities.Abstracts.Service import Service
 from utils.decorators import singleton
 
 
 @singleton
-
-class ctrl(Controller):
+class ResidenceService(Service):
     def __init__(self, repo):
         super().__init__()  
         self.repo = repo

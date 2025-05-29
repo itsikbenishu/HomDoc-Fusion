@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 class Repository(ABC):
-    def __init__(self, DB):
-        self.DB = DB
+    def __init__(self):
+        self.DB = None
 
     @abstractmethod
     def get_by_id(self, item_id):

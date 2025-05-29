@@ -4,9 +4,9 @@ from utils.decorators import singleton
 
 
 @singleton
-class repo(Repository):
-    def __init__(self, DB):
-        super().__init__(DB)  
+class ChattelsRepository(Repository):
+    def __init__(self):
+        super().__init__()  
 
     def get_by_id(self, item_id):
         return jsonify({})
