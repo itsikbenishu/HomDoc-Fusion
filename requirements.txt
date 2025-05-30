@@ -1,11 +1,9 @@
 gunicorn
 requests
 pathlib
-pydantic_settings 
-psycopg[binary]
-pydantic[email]
+pydantic
+pydantic-settings
+psycopg2-binary
 sqlalchemy
 fastapi[all]
 uvicorn
-sqlalchemy
-jinja2
