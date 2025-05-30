@@ -1,4 +1,4 @@
-from pipeline.operation import Operation
+from pipeline.operation_t import Operation
 
 class Batch(Operation):
     def __init__(self, operation):

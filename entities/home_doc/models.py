@@ -2,8 +2,8 @@ from typing import Optional
 from sqlalchemy import String, Integer, DateTime, ForeignKey, Enum, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from entities.common.enums import HomeDocCategoriesEnum, HomeDocTypeEnum
-from entities.common.base import Base
+from entities.common.enums_T import HomeDocCategoriesEnum, HomeDocTypeEnum
+from entities.common.base_T import Base
 
 class HomeDocs(Base):
     __tablename__ = "home_docs"
