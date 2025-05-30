@@ -1,4 +1,4 @@
-from pipeline.operation import Operation
+from pipeline_T.operation import Operation
 from entities.residence.service import ResidenceService
 
 class FusionOper(Operation):
