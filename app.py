@@ -9,7 +9,7 @@ import uvicorn
 
 from app_config import app_settings
 from db_config import db_settings
-from fusion_temp.rental_listing.run_pipeline import run_pipeline
+from fusion.rental_listing.run_pipeline import run_pipeline
 
 app = FastAPI()
 

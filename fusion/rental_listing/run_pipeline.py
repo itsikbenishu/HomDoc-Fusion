@@ -1,7 +1,7 @@
 
-from fusion_temp.rental_listing.fetch_oper import FetchOper
-from fusion_temp.rental_listing.pipeline import RentalListPipeline
-from fusion_temp.rental_listing.transformation_oper import TransformationOper
+from fusion.rental_listing.fetch_oper import FetchOper
+from fusion.rental_listing.pipeline import RentalListPipeline
+from fusion.rental_listing.transformation_oper import TransformationOper
 
 def run_pipeline(property_type):
     rental_list_pipeline = RentalListPipeline()
