@@ -1,4 +1,4 @@
-from pipeline_T.operation import Operation
+from pipeline.operation import Operation
 
 class Pipeline:
     def __init__(self):
