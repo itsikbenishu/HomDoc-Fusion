@@ -3,7 +3,7 @@ requests
 pathlib
 pydantic
 pydantic-settings
-psycopg2-binary
+psycopg[binary]
 sqlalchemy
 fastapi[all]
 uvicorn
