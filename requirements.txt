@@ -4,6 +4,6 @@ pathlib
 pydantic
 pydantic-settings
 psycopg[binary]
-sqlalchemy
+sqlmodel
 fastapi[all]
 uvicorn

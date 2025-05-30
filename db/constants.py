@@ -1,6 +1,5 @@
 import psycopg
-from psycopg import sql
-from db_config import db_settings
+from db.config import db_settings
 
 ALLOWED_TABLES = {"rentcast_stats"}
 

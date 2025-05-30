@@ -3,7 +3,7 @@ import json
 from datetime import datetime, date
 from urllib.parse import quote
 from pipeline.operation import Operation
-from entities.utils.constants_db import select, update_row_by_id
+from db.constants import select, update_row_by_id
 from fusion.rental_listing.api_config import api_settings
 
 class FetchOper(Operation):

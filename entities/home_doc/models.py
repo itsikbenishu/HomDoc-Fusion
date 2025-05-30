@@ -1,43 +1,108 @@
-from typing import Optional
-from sqlalchemy import String, Integer, DateTime, ForeignKey, Enum, JSON
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
+from typing import Optional, List
+from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Enum, JSON, func
+from sqlalchemy.sql.sqltypes import DateTime
 from entities.common.enums import HomeDocCategoriesEnum, HomeDocTypeEnum
-from entities.common.base import Base
+from pydantic import ConfigDict 
 
-class HomeDocs(Base):
+class HomeDocs(SQLModel, table=True):
     __tablename__ = "home_docs"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    father_id: Mapped[Optional[int]] = mapped_column(ForeignKey("home_docs.id", ondelete="CASCADE"))
-    interior_entity_key: Mapped[str] = mapped_column(String)
-    father_interior_entity_key: Mapped[str] = mapped_column(String)
-    created_at: Mapped[Optional[DateTime]] = mapped_column(server_default=func.now())
-    updated_at: Mapped[Optional[DateTime]] = mapped_column(server_default=func.now())
-    category: Mapped[HomeDocCategoriesEnum] = mapped_column(Enum(HomeDocCategoriesEnum))
-    type: Mapped[HomeDocTypeEnum] = mapped_column(Enum(HomeDocTypeEnum))
-    description: Mapped[Optional[str]] = mapped_column(String)
-    extra_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    id: int = Field(default=None, primary_key=True)
+    father_id: Optional[int] = Field(
+        default=None,
+        foreign_key="home_docs.id",
+        ondelete="CASCADE",
+        alias="fatherId"
+    )
+    interior_entity_key: str = Field(
+        nullable=False,
+        alias="interiorEntityKey"
+    )
+    father_interior_entity_key: str = Field(
+        nullable=False,
+        alias="fatherInteriorEntityKey"
+    )
+    created_at: Optional[DateTime] = Field(
+        default=None,
+        alias="createdAt",
+        sa_column_kwargs={"server_default": func.now()}
+    )
+    updated_at: Optional[DateTime] = Field(
+        default=None,
+        alias="updatedAt",
+        sa_column_kwargs={"server_default": func.now()}
+    )
+    category: HomeDocCategoriesEnum = Field(
+        sa_column=Enum(HomeDocCategoriesEnum),
+    )
+    type: HomeDocTypeEnum = Field(
+        sa_column=Enum(HomeDocTypeEnum),
+    )
+    description: Optional[str] = Field(default=None)
+    extra_data: Optional[dict] = Field(
+        default=None,
+        alias="extraData",
+        sa_column=JSON
+    )
 
-    father: Mapped[Optional["HomeDocs"]] = relationship("HomeDocs", remote_side=[id], backref="children")
+    father: Optional["HomeDocs"] = Relationship(
+        back_populates="children",
+        sa_relationship_kwargs={"remote_side": "HomeDocs.id"}
+    )
+    children: List["HomeDocs"] = Relationship(back_populates="father")
 
-class HomeDocsRelations(Base):
+    model_config = ConfigDict(
+        validate_by_name=True,
+        validate_by_alias=True
+    )
+
+
+class HomeDocsRelations(SQLModel, table=True):
     __tablename__ = "home_docs_relations"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    home_doc_id: Mapped[int] = mapped_column(ForeignKey("home_docs.id", ondelete="CASCADE"))
-    sub_home_doc_id: Mapped[int] = mapped_column(ForeignKey("home_docs.id", ondelete="CASCADE"))
+    id: Optional[int] = Field(default=None, primary_key=True)
+    home_doc_id: int = Field(
+        foreign_key="home_docs.id",
+        ondelete="CASCADE",
+        alias="homeDocId"
+    )
+    sub_home_doc_id: int = Field(
+        foreign_key="home_docs.id",
+        ondelete="CASCADE",
+        alias="subHomeDocId"
+    )
 
-    home_doc: Mapped["HomeDocs"] = relationship(foreign_keys=[home_doc_id])
-    sub_home_doc: Mapped["HomeDocs"] = relationship(foreign_keys=[sub_home_doc_id])
+    home_doc: Optional["HomeDocs"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[HomeDocsRelations.home_doc_id]"}
+    )
 
-class HomeDocsDimensions(Base):
+    sub_home_doc: Optional["HomeDocs"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[HomeDocsRelations.sub_home_doc_id]"}
+    )
+
+    model_config = ConfigDict(
+        validate_by_name=True,
+        validate_by_alias=True
+    )
+
+
+class HomeDocsDimensions(SQLModel, table=True):
     __tablename__ = "home_docs_dimensions"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    home_doc_id: Mapped[int] = mapped_column(ForeignKey("home_docs.id", ondelete="CASCADE"), unique=True)
-    length: Mapped[Optional[str]] = mapped_column(String)
-    width: Mapped[Optional[str]] = mapped_column(String)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    home_doc_id: int = Field(
+        foreign_key="home_docs.id",
+        ondelete="CASCADE",
+        unique=True,
+        alias="homeDocId"
+    )
+    length: Optional[str] = Field(default=None)
+    width: Optional[str] = Field(default=None)
 
-    home_doc: Mapped["HomeDocs"] = relationship()
+    home_doc: Optional["HomeDocs"] = Relationship()
 
+    model_config = ConfigDict(
+        validate_by_name=True,
+        validate_by_alias=True
+    )

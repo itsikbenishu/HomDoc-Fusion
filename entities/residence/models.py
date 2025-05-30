@@ -1,16 +1,25 @@
-from typing import Optional
-from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from entities.common.base import Base
+from typing import Optional, List
+from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Enum, JSON, func
 from entities.home_doc.models import HomeDocs
+from pydantic import ConfigDict 
 
-class ResidenceSpecsAttributes(Base):
+class ResidenceSpecsAttributes(SQLModel, table=True):
     __tablename__ = "residence_specs_attributes"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    home_doc_id: Mapped[int] = mapped_column(ForeignKey("home_docs.id", ondelete="CASCADE"), unique=True)
-    area: Mapped[Optional[str]] = mapped_column(String)
-    sub_Entities_quantity: Mapped[Optional[str]] = mapped_column(String)
-    construction_year: Mapped[Optional[str]] = mapped_column(String)
+    id: int = Field(default=None, primary_key=True)
+    home_doc_id: int = Field(
+        foreign_key="home_docs.id",
+        ondelete="CASCADE",
+        alias="homeDocId"
+    )
+    area: Optional[str] = Field(default=None)
+    sub_Entities_quantity: Optional[str] = Field(default=None)
+    construction_year: Optional[str] = Field(default=None)
 
-    home_doc: Mapped["HomeDocs"] = relationship()
+    home_doc: Optional["HomeDocs"] = Relationship()
+
+    model_config = ConfigDict(
+        validate_by_name=True,
+        validate_by_alias=True
+    )
