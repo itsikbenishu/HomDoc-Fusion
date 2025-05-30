@@ -1,5 +1,4 @@
 from entities.abstracts.repository import Repository
-from flask import jsonify
 from utils.decorators import singleton
 
 
@@ -9,17 +8,17 @@ class ResidenceRepository(Repository):
         super().__init__()  
 
     def get_by_id(self, item_id):
-        return jsonify({})
+        return {}
     
     def get(self):
-        return jsonify({})
+        return {}
 
     def create(self, data):
-        return jsonify({})
+        return {}
 
     def update(self, item_id, data):
-        return jsonify({})
+        return {}
 
 
     def delete(self, item_id):
-        return jsonify({})
+        return {}
