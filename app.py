@@ -16,7 +16,7 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 password_encoded = quote_plus(db_settings.POSTGRES_PASSWORD)
-DATABASE_URL = f"postgresql://{db_settings.POSTGRES_USER}:{password_encoded}@{db_settings.POSTGRES_HOST}:{db_settings.POSTGRES_PORT}/{db_settings.POSTGRES_DB}"
+DATABASE_URL = f"postgresql+psycopg://{db_settings.POSTGRES_USER}:{password_encoded}@{db_settings.POSTGRES_HOST}:{db_settings.POSTGRES_PORT}/{db_settings.POSTGRES_DB}"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
