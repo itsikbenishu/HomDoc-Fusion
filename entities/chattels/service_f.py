@@ -1,9 +1,9 @@
-from entities.abstracts_T.service_t import Service
+from entities.abstracts.service import Service
 from utils.decorators import singleton
 
 
 @singleton
-class ResidenceService(Service):
+class ChattelsService(Service):
     def __init__(self, repo):
         super().__init__()  
         self.repo = repo

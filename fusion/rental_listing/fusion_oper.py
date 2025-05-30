@@ -1,5 +1,5 @@
-from pipeline.operation_t import Operation
-from entities.residence_t.service import ResidenceService
+from pipeline.operation import Operation
+from entities.residence.service import ResidenceService
 
 class FusionOper(Operation):
     def __init__(self):

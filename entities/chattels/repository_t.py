@@ -1,9 +1,9 @@
-from entities.abstracts_T.repository_T import Repository
+from entities.abstracts.repository import Repository
 from utils.decorators import singleton
 
 
 @singleton
-class ResidenceRepository(Repository):
+class ChattelsRepository(Repository):
     def __init__(self):
         super().__init__()  
 
