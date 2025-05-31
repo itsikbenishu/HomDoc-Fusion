@@ -1,7 +1,7 @@
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Enum, JSON, func
-from sqlalchemy.sql.sqltypes import DateTime
+from datetime import datetime
+from sqlalchemy import Enum, Column, JSON, func
 from entities.common.enums import HomeDocCategoriesEnum, HomeDocTypeEnum
 from pydantic import ConfigDict 
 
@@ -23,12 +23,12 @@ class HomeDocs(SQLModel, table=True):
         nullable=False,
         alias="fatherInteriorEntityKey"
     )
-    created_at: Optional[DateTime] = Field(
+    created_at: Optional[datetime] = Field(
         default=None,
         alias="createdAt",
         sa_column_kwargs={"server_default": func.now()}
     )
-    updated_at: Optional[DateTime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None,
         alias="updatedAt",
         sa_column_kwargs={"server_default": func.now()}
@@ -43,7 +43,7 @@ class HomeDocs(SQLModel, table=True):
     extra_data: Optional[dict] = Field(
         default=None,
         alias="extraData",
-        sa_column=JSON
+        sa_column=Column(JSON)
     )
 
     father: Optional["HomeDocs"] = Relationship(

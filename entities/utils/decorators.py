@@ -1,9 +1,10 @@
 def singleton(cls):
-    instances = {}
+    cls._instance = None
 
     def get_instance(*args, **kwargs):
-        if(cls not in instances):
-            instances[cls]= cls(*args, **kwargs)
-        return instances[cls]
-    
-    return get_instance
+        if cls._instance is None:
+            cls._instance = cls(*args, **kwargs)
+        return cls._instance
+
+    cls.get_instance = staticmethod(get_instance)
+    return cls

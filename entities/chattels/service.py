@@ -1,24 +1,23 @@
+from sqlmodel import Session
 from entities.abstracts.service import Service
-from utils.decorators import singleton
-
+from entities.utils.decorators import singleton
 
 @singleton
 class ChattelsService(Service):
     def __init__(self, repo):
-        super().__init__()  
-        self.repo = repo
+        super().__init__(repo)
 
-    def get_by_id(self, item_id):
-        return self.repo.get_by_id(item_id)
+    def get_by_id(self, item_id: int, session: Session):
+        return self.repo.get_by_id(item_id, session)
 
-    def get(self):
-        return self.repo.get()
+    def get(self, session: Session):
+        return self.repo.get(session)
 
-    def create(self, data):
-        return self.repo.create(data)
+    def create(self, data, session: Session):
+        return self.repo.create(data, session)
 
-    def update(self, item_id, data):
-        return self.repo.update(item_id, data)
+    def update(self, item_id: int, data, session: Session):
+        return self.repo.update(item_id, data, session)
 
-    def delete(self, item_id):
-        return self.repo.delete(item_id)
+    def delete(self, item_id: int, session: Session):
+        return self.repo.delete(item_id, session)

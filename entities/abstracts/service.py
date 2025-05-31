@@ -1,5 +1,8 @@
 from abc import ABC,abstractmethod
+from entities.utils.decorators import singleton
 
+
+@singleton
 class Service(ABC):
     def __init__(self):
         self.repo = None
