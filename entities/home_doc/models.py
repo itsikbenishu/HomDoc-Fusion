@@ -13,25 +13,28 @@ class HomeDocs(SQLModel, table=True):
         default=None,
         foreign_key="home_docs.id",
         ondelete="CASCADE",
-        alias="fatherId"
+        alias="fatherId",
+        sa_column_kwargs={"name": "fatherId"}
     )
     interior_entity_key: str = Field(
         nullable=False,
-        alias="interiorEntityKey"
+        alias="interiorEntityKey",
+        sa_column_kwargs={"name": "interiorEntityKey"}
     )
     father_interior_entity_key: str = Field(
         nullable=False,
-        alias="fatherInteriorEntityKey"
+        alias="fatherInteriorEntityKey",
+        sa_column_kwargs={"name": "fatherInteriorEntityKey"}
     )
     created_at: Optional[datetime] = Field(
         default=None,
         alias="createdAt",
-        sa_column_kwargs={"server_default": func.now()}
+        sa_column_kwargs={"name": "createdAt", "server_default": func.now()}
     )
     updated_at: Optional[datetime] = Field(
         default=None,
         alias="updatedAt",
-        sa_column_kwargs={"server_default": func.now()}
+        sa_column_kwargs={"name": "updatedAt", "server_default": func.now()}
     )
     category: HomeDocCategoriesEnum = Field(
         sa_column=Enum(HomeDocCategoriesEnum),
@@ -43,7 +46,7 @@ class HomeDocs(SQLModel, table=True):
     extra_data: Optional[dict] = Field(
         default=None,
         alias="extraData",
-        sa_column=Column(JSON)
+        sa_column=Column(JSON, name="extraData")
     )
 
     father: Optional["HomeDocs"] = Relationship(
@@ -65,12 +68,14 @@ class HomeDocsRelations(SQLModel, table=True):
     home_doc_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
-        alias="homeDocId"
+        alias="homeDocId",
+        sa_column_kwargs={"name": "homeDocId"}
     )
     sub_home_doc_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
-        alias="subHomeDocId"
+        alias="subHomeDocId",
+        sa_column_kwargs={"name": "subHomeDocId"}
     )
 
     home_doc: Optional["HomeDocs"] = Relationship(
@@ -95,7 +100,8 @@ class HomeDocsDimensions(SQLModel, table=True):
         foreign_key="home_docs.id",
         ondelete="CASCADE",
         unique=True,
-        alias="homeDocId"
+        alias="homeDocId",
+        sa_column_kwargs={"name": "homeDocId"}
     )
     length: Optional[str] = Field(default=None)
     width: Optional[str] = Field(default=None)
