@@ -1,5 +1,6 @@
 import psycopg
 from db.config import db_settings
+from typing import Optional, Any
 
 ALLOWED_TABLES = {"rentcast_stats"}
 
@@ -18,12 +19,12 @@ def _get_db():
         raise
 
 
-def select(query, params=None):
+def select(query: str, params: Optional[list | tuple] = None) -> dict[str, Any]:
     try:
         with _get_db() as conn:
             with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
                 cur.execute(query, params or ())
-                return cur.fetchall()
+                return cur.fetchone()
     except psycopg.Error as e:
         print(f"Select query failed: {e}")
         raise

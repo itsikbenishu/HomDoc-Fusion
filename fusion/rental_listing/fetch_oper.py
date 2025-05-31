@@ -15,8 +15,8 @@ class FetchOper(Operation):
 
     def run(self, input=None):
         res_select = select("SELECT * FROM rentcast_stats WHERE id = %s", (1,))
-        rentcast_stats = res_select[0]
-        
+        rentcast_stats = res_select
+
         print("current rentcast_stats:")
         print(rentcast_stats)
         limit = rentcast_stats["limit_value"]
