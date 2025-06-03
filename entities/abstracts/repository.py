@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from sqlmodel import Session
+from typing import Optional, Dict, Any
 
 class Repository(ABC):
     def __init__(self):
@@ -10,7 +11,7 @@ class Repository(ABC):
         pass
 
     @abstractmethod
-    def get(self, session: Session):
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None):
         pass
 
     @abstractmethod

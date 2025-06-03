@@ -22,8 +22,8 @@ class FusionOper(Operation):
             try:
                 # יצירת דירות הבדיקה
                 created_residences = []
-    
+                print(f"input: {input}")
             except Exception as e:
-                print(f"שגיאה: {str(e)}")
+                print(f"error: {str(e)}")
                 session.rollback()
                 raise

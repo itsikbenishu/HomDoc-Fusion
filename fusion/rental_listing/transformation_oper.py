@@ -40,7 +40,7 @@ class TransformationOper(Operation):
                     "error": str(e)  
                 })
 
-        print(f"validated: {len(validated_listings)} listingss")
+        print(f"validated: {len(validated_listings)} listings")
         print(f"error: {len(errors)} errors")
         print(errors)
 

@@ -26,7 +26,7 @@ class FetchOper(Operation):
             response = self._fetch(self._property_type, limit, offset)
             rentcast_stats["api_calls_number"] = 1
             rentcast_stats["offset"] = offset +  limit
-            update_row_by_id("rentcast_stats", rentcast_stats,1)
+            update_row_by_id("rentcast_stats", rentcast_stats, 1)
             output = response.text
         elif rentcast_stats["api_calls_number"] >= rentcast_stats["api_calls_max_number"]:    
             with open(f'{self._folder}/{self._api_example_file}.json', 'r') as api_example_file:
