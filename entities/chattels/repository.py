@@ -18,6 +18,3 @@ class ChattelsRepository(Repository):
 
     def update(self, item_id: int, data, session: Session):
         return {}
-
-    def delete(self, item_id: int, session: Session):
-        return {}

@@ -12,7 +12,8 @@ class ChattelsSpecsAttributes(SQLModel, table=True):
     home_doc_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
-        alias="homeDocId"
+        alias="homeDocId",
+        sa_column_kwargs={"name": "homeDocId"}
     )
     colors: Optional[str] = Field(default=None)
     quantity: Optional[str] = Field(default=None)

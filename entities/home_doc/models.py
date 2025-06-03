@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 from sqlalchemy import Enum, Column, JSON, func
@@ -22,7 +22,7 @@ class HomeDocs(SQLModel, table=True):
         sa_column_kwargs={"name": "interiorEntityKey"}
     )
     father_interior_entity_key: str = Field(
-        nullable=False,
+        default=None,
         alias="fatherInteriorEntityKey",
         sa_column_kwargs={"name": "fatherInteriorEntityKey"}
     )
@@ -43,8 +43,8 @@ class HomeDocs(SQLModel, table=True):
         sa_column=Enum(HomeDocTypeEnum),
     )
     description: Optional[str] = Field(default=None)
-    extra_data: Optional[dict] = Field(
-        default=None,
+    extra_data: Optional[List[Dict[str, str]]] = Field(
+        default=[],
         alias="extraData",
         sa_column=Column(JSON, name="extraData")
     )

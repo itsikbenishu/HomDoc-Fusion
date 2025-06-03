@@ -2,29 +2,44 @@ from sqlmodel import Session, select
 from entities.abstracts.repository import Repository
 from entities.home_doc.models import HomeDocs
 from entities.utils.decorators import singleton
+from entities.utils.single_table_features import SingleTableFeatures
+from typing import List, Optional, Dict, Any
 
 @singleton
 class HomeDocRepository(Repository):
     def __init__(self):
         super().__init__()  
 
-    def get_by_id(self, item_id: int, session: Session):
+    def get_by_id(self, item_id: int, session: Session) -> HomeDocs:
         statement = select(HomeDocs).where(HomeDocs.id == item_id)
         results = session.exec(statement)
         home_doc = results.one()
-        print("home_doc:", home_doc)
-
         return home_doc
     
-    def get(self, session: Session):
-        return {}
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDocs]:
+        features = SingleTableFeatures(HomeDocs, query_params)
+        statement = features.filter().sort().paginate()
+        
+        results = session.exec(statement)
+        result_list = list(results)
+        
+        return result_list
 
-    def create(self, data, session: Session):
-        return {}
+    def create(self, data: HomeDocs, session: Session) -> HomeDocs:
+        session.add(data)
+        session.commit()
+        session.refresh(data)
+        return data
 
-    def update(self, item_id: int, data, session: Session):
-        return {}
+    def update(self, home_doc: HomeDocs, session: Session) -> HomeDocs:
+        session.add(home_doc)
+        session.commit()
+        session.refresh(home_doc)
+        return home_doc
 
-
-    def delete(self, item_id: int, session: Session):
-        return {}
+    def delete(self, item_id: int, session: Session) -> None:
+        statement = select(HomeDocs).where(HomeDocs.id == item_id)
+        results = session.exec(statement)
+        home_doc = results.one()
+        session.delete(home_doc)
+        session.commit()

@@ -29,4 +29,5 @@ class Pipeline:
             prev_context = operation.get_context()
 
         output = cur
+        
         return output

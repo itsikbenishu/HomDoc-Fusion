@@ -18,6 +18,3 @@ class ChattelsService(Service):
 
     def update(self, item_id: int, data, session: Session):
         return self.repo.update(item_id, data, session)
-
-    def delete(self, item_id: int, session: Session):
-        return self.repo.delete(item_id, session)
