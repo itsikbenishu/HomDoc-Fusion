@@ -1,5 +1,5 @@
 from sqlmodel import Session
-from entities.home_doc.service import HomeDocService
+from entities.abstracts.service import Service
 from entities.residence.models import ResidenceResponse
 from entities.residence.repository import ResidenceRepository
 from entities.home_doc.models import HomeDocs
@@ -8,7 +8,7 @@ from typing import Dict, Any, List, Optional
 from sqlalchemy.exc import NoResultFound
 
 @singleton
-class ResidenceService(HomeDocService[ResidenceResponse]):
+class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
     def __init__(self, repo: ResidenceRepository):
         super().__init__(repo)
 

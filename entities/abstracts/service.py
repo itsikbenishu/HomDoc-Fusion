@@ -2,12 +2,15 @@ from abc import ABC, abstractmethod
 from sqlmodel import Session
 from typing import Optional, Dict, Any, TypeVar, Generic, List, Union
 from entities.utils.decorators import singleton
+from entities.abstracts.repository import Repository
+
 
 ResponseType = TypeVar("ResponseType")  
+RepoType = TypeVar("RepoType", bound=Repository)
 
 @singleton
-class Service(ABC, Generic[ResponseType]):
-    def __init__(self, repo):
+class Service(Generic[ResponseType], ABC):
+    def __init__(self, repo: RepoType):
         self.repo = repo
 
     @abstractmethod

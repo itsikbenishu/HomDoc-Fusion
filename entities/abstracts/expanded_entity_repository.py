@@ -1,9 +1,11 @@
 from enum import Enum
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any, TypeVar, Generic, List, Type
+from typing import List, Optional, Dict, Any, TypeVar, Generic, Type
 from sqlmodel import Session, SQLModel, select
 from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.sql.selectable import Select
+from entities.abstracts.repository import Repository
 
 class RelationshipType(Enum):
     ONE_TO_ONE = "one_to_one"
@@ -12,53 +14,54 @@ class RelationshipType(Enum):
 
 class LoadStrategy(Enum):
     JOINED = "joined"
-    SELECT_IN = "selectin" 
+    SELECT_IN = "selectin"
 
 @dataclass
 class RelationshipConfig:
     model: Type[SQLModel]
     relationship_type: RelationshipType
     load_strategy: LoadStrategy
-    relationship_field: str  
-
+    relationship_field: str
 
 PrimaryModelType = TypeVar("PrimaryModelType", bound=SQLModel)
 
-class ExpandedEntityRepository(ABC, Generic[PrimaryModelType]):
-    def __init__(self, 
-                 primary_model: Type[PrimaryModelType], 
-                 relationships: List[RelationshipConfig]):
+class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
+    primary_model: Type[PrimaryModelType]
+    relationships: List[RelationshipConfig]
+    _base_query: Select
+
+    def __init__(self, primary_model: Type[PrimaryModelType], relationships: List[RelationshipConfig]) -> None:
         self.primary_model = primary_model
         self.relationships = relationships
         self._base_query = self._build_base_query()
 
-    def _build_base_query(self) -> select:
+    def _build_base_query(self) -> Select:
         query = select(self.primary_model)
-        
+
         for rel_config in self.relationships:
             field = getattr(self.primary_model, rel_config.relationship_field)
-            
+
             if rel_config.load_strategy == LoadStrategy.JOINED:
                 query = query.options(joinedload(field))
             elif rel_config.load_strategy == LoadStrategy.SELECT_IN:
                 query = query.options(selectinload(field))
-                
+
         return query
 
     @abstractmethod
-    def get_by_id(self, item_id: int, session: Session) -> Any:
+    def get_by_id(self, item_id: int, session: Session) -> PrimaryModelType:
         pass
 
     @abstractmethod
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[Any]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[PrimaryModelType]:
         pass
 
     @abstractmethod
-    def create(self, data: Dict[str, Any], session: Session) -> Any:
+    def create(self, data: Dict[str, Any], session: Session) -> PrimaryModelType:
         pass
 
     @abstractmethod
-    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> Any:
+    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> PrimaryModelType:
         pass
 
     def delete(self, item_id: int, session: Session) -> None:

@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from sqlmodel import Session, SQLModel
 from typing import Optional, Dict, Any, TypeVar, Generic, List
+from entities.abstracts.repository import Repository
 
 ModelType = TypeVar("ModelType", bound=SQLModel)
 
-class SingleEntityRepository(ABC, Generic[ModelType]):
+class SingleEntityRepository(Repository, Generic[ModelType]):
     def __init__(self):
         pass
 

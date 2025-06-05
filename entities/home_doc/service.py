@@ -7,10 +7,9 @@ from sqlalchemy.exc import NoResultFound
 from entities.home_doc.repository import HomeDocRepository
 
 @singleton
-class HomeDocService(Service[HomeDocs]):
+class HomeDocService(Service[HomeDocs, HomeDocRepository]):
     def __init__(self, repo: HomeDocRepository):
-        super().__init__()
-        self.repo = repo
+        super().__init__(repo)
 
     def get_by_id(self, item_id: int, session: Session) -> HomeDocs:
         return self.repo.get_by_id(item_id, session)
