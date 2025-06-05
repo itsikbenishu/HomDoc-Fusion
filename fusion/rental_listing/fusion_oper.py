@@ -20,10 +20,26 @@ class FusionOper(Operation):
 
         with Session(engine) as session:
             try:
-                # יצירת דירות הבדיקה
-                created_residences = []
-                print(f"input: {input}")
+                propertyListings = input
+                external_ids = []
+                rooms_numbers_by_external_ids = {}
+  
+                for propertyListing in propertyListings:
+                    external_ids.append(propertyListing.rentcast_id)
+                    rooms_numbers_by_external_ids[propertyListing.rentcast_id] = {
+                        "bedrooms": propertyListing.bedrooms,
+                        "bathrooms": propertyListing.bathrooms
+                    }
+
+                ids_by_external_ids = HomeDocRepository.get_ids_by_external_ids(
+                    external_ids,
+                    session
+                )
+
+                for propertyListing in propertyListings:
+                    if propertyListing.rentcast_id in ids_by_external_ids:
+                        propertyListing.home_doc_id = ids_by_external_ids[propertyListing.rentcast_id]
+
             except Exception as e:
                 print(f"error: {str(e)}")
-                session.rollback()
                 raise

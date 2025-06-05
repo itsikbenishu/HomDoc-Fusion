@@ -28,10 +28,8 @@ class Contact(BaseModel):
     email: Optional[EmailStr] = None
     website: Optional[str] = None
 
-
 class HOA(BaseModel):
     fee: Optional[float] = None
-
 
 class HistoryItem(BaseModel):
     event: Optional[str] = None
@@ -43,14 +41,14 @@ class HistoryItem(BaseModel):
     
 class PropertyListing(BaseModel):
     rentcastId: str = Field(alias="id")
-    formattedAddress: str
+    interiorEntityKey: str = Field(alias="formattedAddress")
     county: Optional[str] = None
     propertyType: PropertyTypeEnum
     bedrooms: Optional[float] = None
     bathrooms: Optional[float] = None
-    squareFootage: Optional[float] = None
+    area: Optional[float] = Field(alias="squareFootage")
     lotSize: Optional[float] = None
-    yearBuilt: Optional[int] = None
+    construction_Year: Optional[int] = Field(alias="yearBuilt")
     hoa: Optional[HOA] = None
     status: Optional[ListingStatusEnum] = None
     price: Optional[float] = None
@@ -67,16 +65,16 @@ class PropertyListing(BaseModel):
     history: Optional[Dict[str, HistoryItem]] = None
 
     @field_serializer("squareFootage")
-    def serialize_square_footage(self, v):
-        if v is None:
-            return v
-        return round(v * 0.092903, 2)
+    def serialize_square_footage(self, value):
+        if value is None:
+            return value
+        return round(value * 0.092903, 2)
 
     @field_serializer("lotSize")
-    def serialize_lot_size(self, v):
-        if v is None:
-            return v
-        return round(v * 0.092903, 2)
+    def serialize_lot_size(self, value):
+        if value is None:
+            return value
+        return round(value * 0.092903, 2)
 
 
 
@@ -91,5 +89,5 @@ def filter_fields(property_listing):
     return filtered_fields
 
 
-property_listing_transfom = lambda property_listing: PropertyListing(**filter_fields(property_listing))
+property_listing_transform = lambda property_listing: PropertyListing(**filter_fields(property_listing))
 

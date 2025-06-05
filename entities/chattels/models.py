@@ -1,6 +1,5 @@
-from typing import Optional, List
+from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Enum, JSON, func
 from entities.home_doc.models import HomeDocs
 from pydantic import ConfigDict 
 
@@ -16,8 +15,8 @@ class ChattelsSpecsAttributes(SQLModel, table=True):
         sa_column_kwargs={"name": "homeDocId"}
     )
     colors: Optional[str] = Field(default=None)
-    quantity: Optional[str] = Field(default=None)
-    weight: Optional[str] = Field(default=None)
+    quantity: Optional[int] = Field(default=None)
+    weight: Optional[float] = Field(default=None)
 
     home_doc: Optional["HomeDocs"] = Relationship()
 

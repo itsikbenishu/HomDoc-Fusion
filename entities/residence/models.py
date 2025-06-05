@@ -13,13 +13,13 @@ class ResidenceSpecsAttributes(SQLModel, table=True):
         alias="homeDocId",
         sa_column_kwargs={"name": "homeDocId"}
     )
-    area: Optional[str] = None
-    sub_entities_quantity: Optional[str] = Field(
+    area: Optional[float] = None
+    sub_entities_quantity: Optional[int] = Field(
         default=None,
         alias="subEntitiesQuantity",
         sa_column_kwargs={"name": "subEntitiesQuantity"}
     )
-    construction_year: Optional[str] = Field(
+    construction_year: Optional[int] = Field(
         default=None,
         alias="constructionYear",
         sa_column_kwargs={"name": "constructionYear"}
@@ -39,16 +39,16 @@ class ResidenceResponse(SQLModel):
     category: str
     type: str
     description: Optional[str] = None
-    extra_data: Optional[List[Dict[str, str]]] = Field(default=[])
+    extra_data: Optional[List[Dict[str, str]]] = Field(default_factory=list)
     
-    area: Optional[str] = None
-    sub_entities_quantity: Optional[str] = None
-    construction_year: Optional[str] = None
+    area: Optional[float] = Field(default=None)
+    sub_entities_quantity: Optional[int] = Field(default=None)
+    construction_year: Optional[int] = Field(default=None)
     
-    length: Optional[str] = None
-    width: Optional[str] = None
+    length: Optional[int] = Field(default=None)
+    width: Optional[int] = Field(default=None)
     
-    children: List[HomeDocs] = []
+    children: List[HomeDocs] = Field(default=list)
 
     @classmethod
     def from_models(cls, 

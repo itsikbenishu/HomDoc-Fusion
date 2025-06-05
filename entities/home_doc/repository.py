@@ -19,7 +19,6 @@ class HomeDocRepository(Repository):
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDocs]:
         features = SingleTableFeatures(HomeDocs, query_params)
         statement = features.filter().sort().paginate()
-        
         results = session.exec(statement)
         result_list = list(results)
         
@@ -29,12 +28,14 @@ class HomeDocRepository(Repository):
         session.add(data)
         session.commit()
         session.refresh(data)
+
         return data
 
     def update(self, home_doc: HomeDocs, session: Session) -> HomeDocs:
         session.add(home_doc)
         session.commit()
         session.refresh(home_doc)
+
         return home_doc
 
     def delete(self, item_id: int, session: Session) -> None:
@@ -43,3 +44,9 @@ class HomeDocRepository(Repository):
         home_doc = results.one()
         session.delete(home_doc)
         session.commit()
+
+    def get_ids_by_external_ids(self, external_ids: List[str], session: Session) -> Dict[str, int]:
+        statement = select(HomeDocs.id, HomeDocs.external_id).where(HomeDocs.external_id.in_(external_ids))
+        results = session.exec(statement)
+
+        return {result.external_id: result.id for result in results}

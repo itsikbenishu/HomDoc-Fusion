@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 from pipeline.operation import Operation
-from fusion.rental_listing.transformation import property_listing_transfom
+from fusion.rental_listing.transformation import property_listing_transform
 
 class TransformationOper(Operation):
     def __init__(self):
@@ -27,7 +27,7 @@ class TransformationOper(Operation):
 
         for item in property_listing:
             try:
-                listing = property_listing_transfom(item)
+                listing = property_listing_transform(item)
                 validated_listings.append(listing)
             except ValidationError as e:
                 errors.append({

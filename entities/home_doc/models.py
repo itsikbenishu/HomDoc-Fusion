@@ -16,6 +16,11 @@ class HomeDocs(SQLModel, table=True):
         alias="fatherId",
         sa_column_kwargs={"name": "fatherId"}
     )
+    external_id: str = Field(
+        default=None,
+        alias="externalId",
+        sa_column_kwargs={"name": "externalId"}
+    )
     interior_entity_key: str = Field(
         nullable=False,
         alias="interiorEntityKey",
@@ -103,8 +108,9 @@ class HomeDocsDimensions(SQLModel, table=True):
         alias="homeDocId",
         sa_column_kwargs={"name": "homeDocId"}
     )
-    length: Optional[str] = Field(default=None)
-    width: Optional[str] = Field(default=None)
+    
+    length: Optional[int] = Field(default=None)
+    width: Optional[int] = Field(default=None)
 
     home_doc: Optional["HomeDocs"] = Relationship()
 
