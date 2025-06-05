@@ -7,7 +7,7 @@ from sqlalchemy.exc import NoResultFound
 from entities.home_doc.repository import HomeDocRepository
 
 @singleton
-class HomeDocService(Service):
+class HomeDocService(Service[HomeDocs]):
     def __init__(self, repo: HomeDocRepository):
         super().__init__()
         self.repo = repo

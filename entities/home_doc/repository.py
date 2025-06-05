@@ -1,12 +1,12 @@
 from sqlmodel import Session, select
-from entities.abstracts.repository import Repository
+from entities.abstracts.single_entity_repository import SingleEntityRepository
 from entities.home_doc.models import HomeDocs
 from entities.utils.decorators import singleton
 from entities.utils.single_table_features import SingleTableFeatures
 from typing import List, Optional, Dict, Any
 
 @singleton
-class HomeDocRepository(Repository):
+class HomeDocRepository(SingleEntityRepository[HomeDocs]):
     def __init__(self):
         super().__init__()  
 
