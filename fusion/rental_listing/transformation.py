@@ -64,7 +64,7 @@ class PropertyListing(BaseModel):
     listingOffice: Optional[Contact] = None
     history: Optional[Dict[str, HistoryItem]] = None
 
-    @field_serializer("squareFootage")
+    @field_serializer("area")
     def serialize_square_footage(self, value):
         if value is None:
             return value
