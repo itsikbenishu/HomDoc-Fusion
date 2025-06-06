@@ -9,7 +9,7 @@ ResponseType = TypeVar("ResponseType")
 RepoType = TypeVar("RepoType", bound=Repository)
 
 @singleton
-class Service(Generic[ResponseType], ABC):
+class Service(Generic[ResponseType, RepoType], ABC):
     def __init__(self, repo: RepoType):
         self.repo = repo
 
