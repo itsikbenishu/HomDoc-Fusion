@@ -20,14 +20,19 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
             raise ValueError(f"Residence with id {item_id} not found")
 
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[ResidenceResponse]:
+        query_params["category[$NOTLIKE]"] = "ROOM\\_"
+        query_params["category[$wildcard]"] = "end"
         results = self.repo.get(session, query_params)
+
         return [self._to_response(home_doc) for home_doc in results]
 
     def create(self, data: Dict[str, Any], session: Session) -> ResidenceResponse:
+        self._validate_category(data)
         home_doc = self.repo.create(data, session)
         return self._to_response(home_doc)
 
     def update(self, item_id: int, data: Dict[str, Any], session: Session) -> ResidenceResponse:
+        self._validate_category(data)
         home_doc = self.repo.update(item_id, data, session)
         return self._to_response(home_doc)
 
@@ -46,3 +51,8 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
         dimensions = getattr(home_doc, 'dimensions', None)
         
         return ResidenceResponse.from_models(home_doc, specs, dimensions)
+    
+    def _validate_category(self, data: Dict[str, Any]) -> None:
+        category = data.get("category")
+        if category and category.startswith("ROOM_"):
+            raise ValueError(f"Category '{category}' creation/update is forbidden for residence.")

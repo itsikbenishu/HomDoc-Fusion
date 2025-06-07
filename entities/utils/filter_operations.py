@@ -9,7 +9,7 @@ class FilterOperators:
             self.tz = ZoneInfo(timezone_str)
         except Exception:
             self.tz = ZoneInfo("UTC") 
-            
+
         self.operators = {
             "eq": lambda field, value: field == value,
             "ne": lambda field, value: field != value,
@@ -18,8 +18,11 @@ class FilterOperators:
             "gte": lambda field, value: field >= value,
             "lte": lambda field, value: field <= value,
             "in": lambda field, value: field.in_(self._handle_in_filter(field, value)),
+            "not_in": lambda field, value: field.notin_(self._handle_in_filter(field, value)),
             "LIKE": lambda field, value, wildcard_position="both": self._handle_like_filter(field, str(value), False, wildcard_position),
-            "ILIKE": lambda field, value, wildcard_position="both": self._handle_like_filter(field, str(value), True, wildcard_position)
+            "ILIKE": lambda field, value, wildcard_position="both": self._handle_like_filter(field, str(value), True, wildcard_position),
+            "NOT_LIKE": lambda field, value, wildcard_position="both": ~self._handle_like_filter(field, str(value), False, wildcard_position),
+            "NOT_ILIKE": lambda field, value, wildcard_position="both": ~self._handle_like_filter(field, str(value), True, wildcard_position),
         }
 
     def handle_date_filter(self, field: ColumnElement, value: str, operator: str) -> ColumnElement:
