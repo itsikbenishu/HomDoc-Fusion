@@ -12,39 +12,53 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
     def __init__(self, repo: ResidenceRepository):
         super().__init__(repo)
 
-    def get_by_id(self, item_id: int, session: Session) -> ResidenceResponse:
-        try:
-            home_doc = self.repo.get_by_id(item_id, session)
-            return self._to_response(home_doc)
-        except NoResultFound:
-            raise ValueError(f"Residence with id {item_id} not found")
+    def get_by_id(self, item_id: int, session: Session) -> Optional[ResidenceResponse]:
+        home_doc = self.repo.get_by_id(item_id, session)
+        if not home_doc:
+            return None
+        return self._to_response(home_doc)
 
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[ResidenceResponse]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> Optional[List[ResidenceResponse]]:
+        if query_params is None:
+            query_params = {}
         query_params["category[$NOTLIKE]"] = "ROOM\\_"
         query_params["category[$wildcard]"] = "end"
+        
         results = self.repo.get(session, query_params)
-
+        if not results:
+            return None
         return [self._to_response(home_doc) for home_doc in results]
 
     def create(self, data: Dict[str, Any], session: Session) -> ResidenceResponse:
-        self._validate_entity(data)
-        home_doc = self.repo.create(data, session)
-        return self._to_response(home_doc)
+        try:
+            self._validate_entity(data)
+            home_doc = self.repo.create(data, session)
+            return self._to_response(home_doc)
+        except ValueError:
+            raise
+        except Exception as e:
+            session.rollback()
+            raise Exception(f"Error creating residence: {str(e)}")
 
     def update(self, item_id: int, data: Dict[str, Any], session: Session) -> ResidenceResponse:
-        self._validate_entity(data)
-        home_doc = self.repo.update(item_id, data, session)
-        return self._to_response(home_doc)
+        try:
+            self._validate_entity(data)
+            home_doc = self.repo.update(item_id, data, session)
+            if not home_doc:
+                raise ValueError(f"Residence with id {item_id} not found")
+            return self._to_response(home_doc)
+        except ValueError:
+            raise
+        except Exception as e:
+            session.rollback()
+            raise Exception(f"Error updating residence with id {item_id}: {str(e)}")
 
     def delete(self, item_id: int, session: Session) -> None:
         try:
-            return self.repo.delete(item_id, session)
-        except NoResultFound:
-            raise ValueError(f"HomeDoc with id {item_id} not found")
+            self.repo.delete(item_id, session)
         except Exception as e:
             session.rollback()
-            raise Exception(f"Error deleting HomeDoc: {str(e)}")
-
+            raise Exception(f"Error deleting residence with id {item_id}: {str(e)}")
 
     def _to_response(self, home_doc: HomeDocs) -> ResidenceResponse:
         specs = getattr(home_doc, 'specs', None)

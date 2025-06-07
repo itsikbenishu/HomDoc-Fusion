@@ -36,7 +36,6 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDocs]):
         residence_filter = not_(HomeDocs.category.like("ROOM\\_%"))
         statement = self._base_query.where(self.primary_model.id == item_id, residence_filter)
         result = session.exec(statement).one_or_none()
-
         return result
 
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDocs]:
@@ -84,32 +83,27 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDocs]):
         return self.get_by_id(home_doc.id, session)
 
     def update(self, item_id: int, data: Dict[str, Any], session: Session) -> HomeDocs:
-        try:
-            home_doc = self.get_by_id(item_id, session)
-            
-            home_doc_fields = set(HomeDocs.model_fields) - {'id'}
+        home_doc = self.get_by_id(item_id, session)
+        
+        home_doc_fields = set(HomeDocs.model_fields) - {'id'}
+        for field_name, field_value in data.items():
+            if field_name in home_doc_fields:
+                setattr(home_doc, field_name, field_value)
+        
+        if hasattr(home_doc, 'specs') and home_doc.specs:
+            specs_fields = set(ResidenceSpecsAttributes.model_fields) - {'id', 'home_doc_id'}
             for field_name, field_value in data.items():
-                if field_name in home_doc_fields:
-                    setattr(home_doc, field_name, field_value)
-            
-            if hasattr(home_doc, 'specs') and home_doc.specs:
-                specs_fields = set(ResidenceSpecsAttributes.model_fields) - {'id', 'home_doc_id'}
-                for field_name, field_value in data.items():
-                    if field_name in specs_fields:
-                        setattr(home_doc.specs, field_name, field_value)
-            
-            if hasattr(home_doc, 'dimensions') and home_doc.dimensions:
-                dimensions_fields = set(HomeDocsDimensions.model_fields) - {'id', 'home_doc_id'}
-                for field_name, field_value in data.items():
-                    if field_name in dimensions_fields:
-                        setattr(home_doc.dimensions, field_name, field_value)
+                if field_name in specs_fields:
+                    setattr(home_doc.specs, field_name, field_value)
+        
+        if hasattr(home_doc, 'dimensions') and home_doc.dimensions:
+            dimensions_fields = set(HomeDocsDimensions.model_fields) - {'id', 'home_doc_id'}
+            for field_name, field_value in data.items():
+                if field_name in dimensions_fields:
+                    setattr(home_doc.dimensions, field_name, field_value)
 
-            session.commit()
-            return home_doc
-            
-        except Exception as e:
-            session.rollback()
-            raise Exception(f"Error updating residence: {str(e)}")
+        session.commit()
+        return home_doc
 
     def delete(self, item_id: int, session: Session) -> None:
         residence_filter = not_(HomeDocs.category.like("ROOM\\_%"))
