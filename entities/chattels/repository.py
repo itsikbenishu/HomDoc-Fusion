@@ -1,10 +1,10 @@
 from sqlmodel import Session
 from entities.abstracts.expanded_entity_repository import ExpandedEntityRepository
 from entities.utils.decorators import singleton
-from entities.home_doc.models import HomeDocs
+from entities.home_doc.models import HomeDoc
 
 @singleton
-class ChattelsRepository(ExpandedEntityRepository[HomeDocs]):
+class ChattelsRepository(ExpandedEntityRepository[HomeDoc]):
     def __init__(self):
         super().__init__()
 

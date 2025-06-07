@@ -2,31 +2,31 @@ from sqlmodel import Session
 from typing import List, Dict, Any, Optional
 from entities.abstracts.service import Service
 from entities.utils.decorators import singleton
-from entities.home_doc.models import HomeDocs
+from entities.home_doc.models import HomeDoc
 from sqlalchemy.exc import NoResultFound
 from entities.home_doc.repository import HomeDocRepository
 
 @singleton
-class HomeDocService(Service[HomeDocs, HomeDocRepository]):
+class HomeDocService(Service[HomeDoc, HomeDocRepository]):
     def __init__(self, repo: HomeDocRepository):
         super().__init__(repo)
 
-    def get_by_id(self, item_id: int, session: Session) -> HomeDocs:
+    def get_by_id(self, item_id: int, session: Session) -> HomeDoc:
         return self.repo.get_by_id(item_id, session)
 
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDocs]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc]:
         return self.repo.get(session, query_params)
 
-    def create(self, data: Dict[str, Any], session: Session) -> HomeDocs:
+    def create(self, data: Dict[str, Any], session: Session) -> HomeDoc:
         try:
             self._validate_entity(data)
-            home_doc = HomeDocs(**data)
+            home_doc = HomeDoc(**data)
             return self.repo.create(home_doc, session)
         except Exception as e:
             session.rollback()
             raise Exception(f"Error creating HomeDoc: {str(e)}")
 
-    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> HomeDocs:
+    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> HomeDoc:
         try:
             self._validate_entity(data)
             home_doc = self.repo.get_by_id(item_id, session)

@@ -5,7 +5,7 @@ from sqlalchemy import Enum, Column, JSON, func
 from entities.common.enums import HomeDocCategoriesEnum, HomeDocTypeEnum
 from pydantic import ConfigDict 
 
-class HomeDocs(SQLModel, table=True):
+class HomeDoc(SQLModel, table=True):
     __tablename__ = "home_docs"
 
     id: int = Field(default=None, primary_key=True)
@@ -52,24 +52,39 @@ class HomeDocs(SQLModel, table=True):
         default=[],
         alias="extraData",
         sa_column=Column(JSON, name="extraData")
-    )
+    )    
+    listing_agent_id: Optional[int] = Field(default=None, foreign_key="listing_contact.id", ondelete="SET NULL")    
+    listing_office_id: Optional[int] = Field(default=None, foreign_key="listing_contact.id", ondelete="SET NULL")
+    listing_history: List["ListingHistory"] = Relationship(back_populates="residence")
 
-    father: Optional["HomeDocs"] = Relationship(
+    father: Optional["HomeDoc"] = Relationship(
         back_populates="children",
-        sa_relationship_kwargs={"remote_side": "HomeDocs.id"}
+        sa_relationship_kwargs={"remote_side": "HomeDoc.id"}
     )
-    children: List["HomeDocs"] = Relationship(back_populates="father")
+    
+    children: List["HomeDoc"] = Relationship(back_populates="father")
 
     specs: Optional["ResidenceSpecsAttributes"] = Relationship(
         back_populates="home_doc",
         sa_relationship_kwargs={"uselist": False}
     )
+    listing: Optional["Listing"] = Relationship(
+        back_populates="home_doc"
+    )
+    listing_agent: Optional["ListingContact"] = Relationship(
+        back_populates="agent_for_home_docs ",
+    )
+    listing_office: Optional["ListingContact"] = Relationship(
+        back_populates="office_for_home_docs ",
+    )
+    history: List["ListingHistory"] = Relationship(
+        back_populates="residence"
+    )
 
-    dimensions: Optional["HomeDocsDimensions"] = Relationship(
+    dimensions: Optional["HomeDocDimensions"] = Relationship(
         back_populates="home_doc",
         sa_relationship_kwargs={"uselist": False}
     )
-
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -77,7 +92,7 @@ class HomeDocs(SQLModel, table=True):
     )
 
 
-class HomeDocsRelations(SQLModel, table=True):
+class HomeDocRelations(SQLModel, table=True):
     __tablename__ = "home_docs_relations"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -94,12 +109,12 @@ class HomeDocsRelations(SQLModel, table=True):
         sa_column_kwargs={"name": "subHomeDocId"}
     )
 
-    home_doc: Optional["HomeDocs"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[HomeDocsRelations.home_doc_id]"}
+    home_doc: Optional["HomeDoc"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[HomeDocRelations.home_doc_id]"}
     )
 
-    sub_home_doc: Optional["HomeDocs"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[HomeDocsRelations.sub_home_doc_id]"}
+    sub_home_doc: Optional["HomeDoc"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[HomeDocRelations.sub_home_doc_id]"}
     )
 
     model_config = ConfigDict(
@@ -108,7 +123,7 @@ class HomeDocsRelations(SQLModel, table=True):
     )
 
 
-class HomeDocsDimensions(SQLModel, table=True):
+class HomeDocDimensions(SQLModel, table=True):
     __tablename__ = "home_docs_dimensions"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -123,12 +138,13 @@ class HomeDocsDimensions(SQLModel, table=True):
     length: Optional[int] = Field(default=None)
     width: Optional[int] = Field(default=None)
 
-    home_doc: Optional["HomeDocs"] = Relationship(back_populates="dimensions")
+    home_doc: Optional["HomeDoc"] = Relationship(back_populates="dimensions")
 
     model_config = ConfigDict(
         validate_by_name=True,
         validate_by_alias=True
     )
 
-from entities.residence.models import ResidenceSpecsAttributes
-HomeDocs.model_rebuild()
+from entities.residence.models import ResidenceSpecsAttributes, ListingContact, ListingHistory, Listing
+
+HomeDoc.model_rebuild()

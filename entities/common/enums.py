@@ -13,3 +13,13 @@ class HomeDocTypeEnum(str, enum.Enum):
     ROOM_FURNITURE = "ROOM_FURNITURE"
     ROOM_STUFF = "ROOM_STUFF"
     ROOM_INSTRUMENT = "ROOM_INSTRUMENT"
+
+class ListingStatusEnum(str, enum.Enum):
+    active = "Active"
+    inactive = "Inactive"
+
+class ListingTypeEnum(str, enum.Enum):
+    standard = "Standard"
+    new_construction = "New Construction"
+    foreclosure = "Foreclosure"
+    short_sale = "Short Sale"

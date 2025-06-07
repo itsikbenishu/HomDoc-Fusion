@@ -2,7 +2,7 @@ from sqlmodel import Session
 from entities.abstracts.service import Service
 from entities.residence.models import ResidenceResponse
 from entities.residence.repository import ResidenceRepository
-from entities.home_doc.models import HomeDocs
+from entities.home_doc.models import HomeDoc
 from entities.utils.decorators import singleton
 from typing import Dict, Any, List, Optional
 from sqlalchemy.exc import NoResultFound
@@ -60,7 +60,7 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
             session.rollback()
             raise Exception(f"Error deleting residence with id {item_id}: {str(e)}")
 
-    def _to_response(self, home_doc: HomeDocs) -> ResidenceResponse:
+    def _to_response(self, home_doc: HomeDoc) -> ResidenceResponse:
         specs = getattr(home_doc, 'specs', None)
         dimensions = getattr(home_doc, 'dimensions', None)
         

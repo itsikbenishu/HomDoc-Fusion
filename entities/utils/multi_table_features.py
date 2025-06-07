@@ -23,12 +23,19 @@ class MultiTableFeatures:
     def build(self) -> Select:
         return self.statement
 
+    def _get_actual_field_name(self, model: Type, name: str) -> Optional[str]:
+        for field in model.__fields__.values():
+            if field.alias == name:
+                return field.name
+        if hasattr(model, name):
+            return name
+        return None
+
     def _find_model_for_field(self, field_name: str) -> Optional[Type]:
         for model in self.models:
-            if hasattr(model, field_name):
-                column = getattr(model, field_name)
-                if hasattr(column, 'expression'):
-                    return model
+            actual_name = self._get_actual_field_name(model, field_name)
+            if actual_name and hasattr(model, actual_name):
+                return model
         return None
 
     def filter(self) -> Select:
@@ -55,8 +62,10 @@ class MultiTableFeatures:
 
             target_model = self._find_model_for_field(field_name)
             if target_model and hasattr(target_model, field_name):
-                column = getattr(target_model, field_name)
-                
+                actual_name = self._get_actual_field_name(target_model, field_name)
+                if actual_name and hasattr(target_model, actual_name):
+                    column = getattr(target_model, actual_name)
+
                 is_date = query_params.get(f"{field_name}[$date]") == "true"
                 wildcard_position = query_params.get(f"{field_name}[$wildcard]", "both")
 
@@ -81,12 +90,14 @@ class MultiTableFeatures:
             for sort_field in sort_fields:
                 is_desc = sort_field.startswith("-")
                 field_name = sort_field[1:] if is_desc else sort_field
-                
+                    
                 target_model = self._find_model_for_field(field_name)
-                if target_model and hasattr(target_model, field_name):
-                    column = getattr(target_model, field_name)
-                    order_by_clauses.append(desc(column) if is_desc else asc(column))
-            
+                if target_model:
+                    actual_name = self._get_actual_field_name(target_model, field_name)
+                    if actual_name and hasattr(target_model, actual_name):
+                        column = getattr(target_model, actual_name)
+                        order_by_clauses.append(desc(column) if is_desc else asc(column))
+                
             if order_by_clauses:
                 self.statement = self.statement.order_by(*order_by_clauses)
         else:

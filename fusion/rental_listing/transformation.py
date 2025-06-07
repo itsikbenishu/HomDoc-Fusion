@@ -2,6 +2,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, EmailStr, field_serializer
 from typing import Optional, Dict
 from datetime import datetime
+from entities.common.enums import ListingStatusEnum, ListingTypeEnum
 
 class PropertyTypeEnum(str, Enum):
     single_family = "Single Family"
@@ -11,16 +12,6 @@ class PropertyTypeEnum(str, Enum):
     multi_family = "Multi-Family"
     apartment = "Apartment"
     land = "Land"
-
-class ListingStatusEnum(str, Enum):
-    active = "Active"
-    inactive = "Inactive"
-
-class ListingTypeEnum(str, Enum):
-    standard = "Standard"
-    new_construction = "New Construction"
-    foreclosure = "Foreclosure"
-    short_sale = "Short Sale"
 
 class Contact(BaseModel):
     name: Optional[str] = None
@@ -80,7 +71,10 @@ class PropertyListing(BaseModel):
 
 
 def filter_fields(property_listing):
-    exclude_fields = { "addressLine1", "addressLine2", "city", "state", "zipCode",  "builder", "latitude", "longitude" }
+    exclude_fields = { "addressLine1", "addressLine2", "city", "state", "zipCode",  "builder", "latitude", "longitude" 
+                        "history", "listingAgent", "listingOffice", "listingType",    # temporary
+                        "listedDate", "removedDate", "createdDate", "lastSeenDate"    # temporary
+                      }
 
     filtered_fields = {
         field: value for field, value in property_listing.items() if field not in exclude_fields
