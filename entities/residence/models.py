@@ -25,12 +25,14 @@ class ResidenceSpecsAttributes(SQLModel, table=True):
         sa_column_kwargs={"name": "constructionYear"}
     )
 
-    home_doc: Optional["HomeDocs"] = Relationship()
+    home_doc: Optional["HomeDocs"] = Relationship(back_populates="specs")
 
     model_config = ConfigDict(
         validate_by_name=True,
         validate_by_alias=True
     )
+
+ResidenceSpecsAttributes.model_rebuild()
 
 class ResidenceResponse(SQLModel):
     id: int
@@ -49,6 +51,11 @@ class ResidenceResponse(SQLModel):
     width: Optional[int] = Field(default=None)
     
     children: List[HomeDocs] = Field(default=list)
+
+    home_doc: Optional["HomeDocs"] = Relationship(
+        back_populates="specs"
+    )
+
 
     @classmethod
     def from_models(cls, 

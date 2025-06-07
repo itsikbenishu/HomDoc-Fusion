@@ -1,6 +1,5 @@
-from sqlmodel import Session, select
+from sqlmodel import Session,select, not_
 from typing import List, Optional, Dict, Any
-from sqlalchemy.exc import NoResultFound
 from entities.abstracts.expanded_entity_repository import ExpandedEntityRepository
 from entities.abstracts.expanded_entity_repository import RelationshipConfig, RelationshipType, LoadStrategy
 from entities.home_doc.models import HomeDocs, HomeDocsDimensions
@@ -34,10 +33,10 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDocs]):
         super().__init__(HomeDocs, relationships)
 
     def get_by_id(self, item_id: int, session: Session) -> HomeDocs:
-        statement = self._base_query.where(self.primary_model.id == item_id)
-        result = session.exec(statement).first()
-        if not result:
-            raise NoResultFound(f"Residence with id {item_id} not found")
+        residence_filter = not_(HomeDocs.category.like("ROOM\\_%"))
+        statement = self._base_query.where(self.primary_model.id == item_id, residence_filter)
+        result = session.exec(statement).one_or_none()
+
         return result
 
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDocs]:
@@ -51,6 +50,7 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDocs]):
         statement = features.filter()
         statement = features.sort() 
         statement = features.paginate()
+
         return session.exec(statement).all()
 
     def create(self, data: Dict[str, Any], session: Session) -> HomeDocs:
@@ -110,3 +110,11 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDocs]):
         except Exception as e:
             session.rollback()
             raise Exception(f"Error updating residence: {str(e)}")
+
+    def delete(self, item_id: int, session: Session) -> None:
+        residence_filter = not_(HomeDocs.category.like("ROOM\\_%"))
+        statement = select(self.primary_model).where(self.primary_model.id == item_id, residence_filter)
+        result = session.exec(statement).one_or_none()
+        if result:
+            session.delete(result)
+            session.commit()

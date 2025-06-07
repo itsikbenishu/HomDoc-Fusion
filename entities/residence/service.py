@@ -31,6 +31,16 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
         home_doc = self.repo.update(item_id, data, session)
         return self._to_response(home_doc)
 
+    def delete(self, item_id: int, session: Session) -> None:
+        try:
+            return self.repo.delete(item_id, session)
+        except NoResultFound:
+            raise ValueError(f"HomeDoc with id {item_id} not found")
+        except Exception as e:
+            session.rollback()
+            raise Exception(f"Error deleting HomeDoc: {str(e)}")
+
+
     def _to_response(self, home_doc: HomeDocs) -> ResidenceResponse:
         specs = getattr(home_doc, 'specs', None)
         dimensions = getattr(home_doc, 'dimensions', None)

@@ -60,6 +60,17 @@ class HomeDocs(SQLModel, table=True):
     )
     children: List["HomeDocs"] = Relationship(back_populates="father")
 
+    specs: Optional["ResidenceSpecsAttributes"] = Relationship(
+        back_populates="home_doc",
+        sa_relationship_kwargs={"uselist": False}
+    )
+
+    dimensions: Optional["HomeDocsDimensions"] = Relationship(
+        back_populates="home_doc",
+        sa_relationship_kwargs={"uselist": False}
+    )
+
+
     model_config = ConfigDict(
         validate_by_name=True,
         validate_by_alias=True
@@ -112,9 +123,12 @@ class HomeDocsDimensions(SQLModel, table=True):
     length: Optional[int] = Field(default=None)
     width: Optional[int] = Field(default=None)
 
-    home_doc: Optional["HomeDocs"] = Relationship()
+    home_doc: Optional["HomeDocs"] = Relationship(back_populates="dimensions")
 
     model_config = ConfigDict(
         validate_by_name=True,
         validate_by_alias=True
     )
+
+from entities.residence.models import ResidenceSpecsAttributes
+HomeDocs.model_rebuild()

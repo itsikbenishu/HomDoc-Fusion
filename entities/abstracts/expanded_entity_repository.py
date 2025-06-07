@@ -65,11 +65,7 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
         pass
 
     def delete(self, item_id: int, session: Session) -> None:
-        statement = select(self.primary_model).where(self.primary_model.id == item_id)
-        result = session.exec(statement).first()
-        if result:
-            session.delete(result)
-            session.commit()
-
+        pass
+    
     def get_related_models(self) -> List[Type[SQLModel]]:
         return [rel.model for rel in self.relationships]

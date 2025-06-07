@@ -2,10 +2,12 @@ from typing import List, Type, Dict, Any, Optional, Set, Callable
 from sqlalchemy.sql import Select
 from sqlalchemy import desc, asc
 from sqlalchemy.sql.elements import ColumnElement
-from .single_table_features import SingleTableFeatures
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import re
+from entities.utils.single_table_features import SingleTableFeatures
+from entities.utils.filter_operations import FilterOperators
+
 
 class MultiTableFeatures:
     def __init__(self, base_statement: Select, models: List[Type], main_model: Type, query_params: Optional[Dict[str, Any]] = None):
@@ -13,25 +15,10 @@ class MultiTableFeatures:
         self.main_model = main_model
         self.statement = base_statement
         self.query_params = query_params or {}
-        self.features = SingleTableFeatures(self.main_model, self.query_params)
+        self.single_table_features = SingleTableFeatures(self.main_model, self.query_params)
 
-        tz_str = self.query_params.get("tz", "Asia/Jerusalem")
-        try:
-            self.tz = ZoneInfo(tz_str)
-        except Exception:
-            self.tz = ZoneInfo("UTC") 
-
-        self.operators: Dict[str, Callable] = {
-            "eq": lambda field, value: field == value,
-            "ne": lambda field, value: field != value,
-            "gt": lambda field, value: field > value,
-            "lt": lambda field, value: field < value,
-            "gte": lambda field, value: field >= value,
-            "lte": lambda field, value: field <= value,
-            "in": lambda field, value: field.in_(value.split(",") if isinstance(value, str) else value),
-            "LIKE": lambda field, value, wildcard_position="both": self._handle_like_filter(field, str(value), False, wildcard_position),
-            "ILIKE": lambda field, value, wildcard_position="both": self._handle_like_filter(field, str(value), True, wildcard_position)
-        }
+        self.filter_ops = self.single_table_features.filter_ops
+        self.operators = self.single_table_features.operators
 
     def build(self) -> Select:
         return self.statement
@@ -43,40 +30,6 @@ class MultiTableFeatures:
                 if hasattr(column, 'expression'):
                     return model
         return None
-
-    def _handle_date_filter(self, field: ColumnElement, value: str, operator: str) -> ColumnElement:
-        value = value.replace('T', ' ')
-
-        try:
-            dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            try:
-                dt = datetime.strptime(value, "%Y-%m-%d")
-            except ValueError:
-                raise ValueError(f"Invalid datetime format: {value}")
-
-        dt_local = dt.replace(tzinfo=self.tz)
-        dt_utc = dt_local.astimezone(ZoneInfo("UTC"))
-
-        if operator == "eq":
-            start_of_day = datetime.combine(dt.date(), datetime.min.time()).replace(tzinfo=self.tz).astimezone(ZoneInfo("UTC"))
-            end_of_day = datetime.combine(dt.date(), datetime.max.time()).replace(tzinfo=self.tz).astimezone(ZoneInfo("UTC"))
-            return field.between(start_of_day, end_of_day)
-
-        filter_func = self.operators.get(operator, self.operators["eq"])
-        
-        return filter_func(field, dt_utc)
-
-    def _handle_like_filter(self, field: ColumnElement, value: str, is_ilike: bool, wildcard_position: str = "both") -> ColumnElement:
-        if not "%" in value:
-            if wildcard_position == "start":
-                value = f"%{value}"
-            elif wildcard_position == "end":
-                value = f"{value}%"
-            elif wildcard_position == "both":
-                value = f"%{value}%"
-        
-        return field.ilike(value) if is_ilike else field.like(value)
 
     def filter(self) -> Select:
         if not self.query_params:
@@ -108,7 +61,7 @@ class MultiTableFeatures:
                 wildcard_position = query_params.get(f"{field_name}[$wildcard]", "both")
 
                 if is_date:
-                    filter_clause = self._handle_date_filter(column, str(param_value), operator)
+                    filter_clause = self.filter_ops.handle_date_filter(column, str(param_value), operator)
                 elif operator.upper() in ["LIKE", "ILIKE"]:
                     filter_clause = self.operators[operator.upper()](column, param_value, wildcard_position)
                 else:
@@ -142,7 +95,7 @@ class MultiTableFeatures:
         return self.statement
 
     def paginate(self) -> Select:
-        paginated = self.features.paginate()
+        paginated = self.single_table_features.paginate()
         self.statement = self.statement.limit(paginated._limit_clause).offset(paginated._offset_clause)
         
         return self.statement

@@ -13,7 +13,7 @@ class HomeDocRepository(SingleEntityRepository[HomeDocs]):
     def get_by_id(self, item_id: int, session: Session) -> HomeDocs:
         statement = select(HomeDocs).where(HomeDocs.id == item_id)
         results = session.exec(statement)
-        home_doc = results.one()
+        home_doc = results.first()
         return home_doc
     
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDocs]:
@@ -41,9 +41,10 @@ class HomeDocRepository(SingleEntityRepository[HomeDocs]):
     def delete(self, item_id: int, session: Session) -> None:
         statement = select(HomeDocs).where(HomeDocs.id == item_id)
         results = session.exec(statement)
-        home_doc = results.one()
-        session.delete(home_doc)
-        session.commit()
+        home_doc = results.one_or_none()
+        if home_doc:
+            session.delete(home_doc)
+            session.commit()
 
     def get_ids_by_external_ids(self, external_ids: List[str], session: Session) -> Dict[str, int]:
         statement = select(HomeDocs.id, HomeDocs.external_id).where(HomeDocs.external_id.in_(external_ids))
