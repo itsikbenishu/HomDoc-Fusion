@@ -16,7 +16,7 @@ class HomeDocs(SQLModel, table=True):
         alias="fatherId",
         sa_column_kwargs={"name": "fatherId"}
     )
-    external_id: str = Field(
+    external_id: Optional[str] = Field(
         default=None,
         alias="externalId",
         sa_column_kwargs={"name": "externalId"}
@@ -26,7 +26,7 @@ class HomeDocs(SQLModel, table=True):
         alias="interiorEntityKey",
         sa_column_kwargs={"name": "interiorEntityKey"}
     )
-    father_interior_entity_key: str = Field(
+    father_interior_entity_key: Optional[str] = Field(
         default=None,
         alias="fatherInteriorEntityKey",
         sa_column_kwargs={"name": "fatherInteriorEntityKey"}

@@ -27,12 +27,12 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
         return [self._to_response(home_doc) for home_doc in results]
 
     def create(self, data: Dict[str, Any], session: Session) -> ResidenceResponse:
-        self._validate_category(data)
+        self._validate_entity(data)
         home_doc = self.repo.create(data, session)
         return self._to_response(home_doc)
 
     def update(self, item_id: int, data: Dict[str, Any], session: Session) -> ResidenceResponse:
-        self._validate_category(data)
+        self._validate_entity(data)
         home_doc = self.repo.update(item_id, data, session)
         return self._to_response(home_doc)
 
@@ -52,7 +52,20 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
         
         return ResidenceResponse.from_models(home_doc, specs, dimensions)
     
-    def _validate_category(self, data: Dict[str, Any]) -> None:
+    def _validate_entity(self, data: Dict[str, Any]) -> None:
         category = data.get("category")
         if category and category.startswith("ROOM_"):
-            raise ValueError(f"Category '{category}' creation/update is forbidden for residence.")
+            raise ValueError(f"Category '{category}' is forbidden for residence. it's maybe a chattels entity")
+        if data.get("type") != "PROPERTY":
+            raise ValueError(f"Type '{data.get('type')}' is forbidden for entity' maybe it's a sub entity.")
+
+    def _validate_sub_entity(self, data: Dict[str, Any]) -> None:
+        category = data.get("category")
+        if category and category.startswith("ROOM_"):
+            raise ValueError(f"Category '{category}' is forbidden for residence. it's maybe a chattels entity")
+        if data.get("father_id") and data.get("father_interior_entity_key") and data.get("type") == "PROPERTY":
+            raise ValueError(f"Father id and father interior entity key are forbidden for property.")
+        if not data.get("father_id") and data.get("type") != "PROPERTY":
+            raise ValueError(f"Father id is required.")
+        if data.get("type") == "PROPERTY":
+            raise ValueError(f"Type {data.get('type')} is forbidden for sub entity.")

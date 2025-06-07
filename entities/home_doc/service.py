@@ -19,6 +19,7 @@ class HomeDocService(Service[HomeDocs, HomeDocRepository]):
 
     def create(self, data: Dict[str, Any], session: Session) -> HomeDocs:
         try:
+            self._validate_entity(data)
             home_doc = HomeDocs(**data)
             return self.repo.create(home_doc, session)
         except Exception as e:
@@ -27,6 +28,7 @@ class HomeDocService(Service[HomeDocs, HomeDocRepository]):
 
     def update(self, item_id: int, data: Dict[str, Any], session: Session) -> HomeDocs:
         try:
+            self._validate_entity(data)
             home_doc = self.repo.get_by_id(item_id, session)
             if not home_doc:
                 raise ValueError(f"HomeDoc with id {item_id} not found")
@@ -50,3 +52,15 @@ class HomeDocService(Service[HomeDocs, HomeDocRepository]):
         except Exception as e:
             session.rollback()
             raise Exception(f"Error deleting HomeDoc: {str(e)}")
+
+    def _validate_entity(self, data: Dict[str, Any]) -> None:
+        if data.get("type") != "PROPERTY":
+            raise ValueError(f"Type '{data.get('type')}' is forbidden for entity' maybe it's a sub entity.")
+
+    def _validate_sub_entity(self, data: Dict[str, Any]) -> None:
+        if data.get("father_id") and data.get("father_interior_entity_key") and data.get("type") == "PROPERTY":
+            raise ValueError(f"Father id and father interior entity key are forbidden for property.")
+        if not data.get("father_id") and data.get("type") != "PROPERTY":
+            raise ValueError(f"Father id is required.")
+        if data.get("type") == "PROPERTY":
+            raise ValueError(f"Type {data.get('type')} is forbidden for sub entity.")
