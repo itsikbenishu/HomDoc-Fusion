@@ -72,10 +72,10 @@ class HomeDoc(SQLModel, table=True):
         back_populates="home_doc"
     )
     listing_agent: Optional["ListingContact"] = Relationship(
-        back_populates="agent_for_home_docs ",
+        back_populates="agent_for_home_docs"
     )
     listing_office: Optional["ListingContact"] = Relationship(
-        back_populates="office_for_home_docs ",
+        back_populates="office_for_home_docs"
     )
     history: List["ListingHistory"] = Relationship(
         back_populates="residence"

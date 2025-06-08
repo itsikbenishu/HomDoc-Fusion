@@ -61,24 +61,24 @@ class MultiTableFeatures:
                 continue
 
             target_model = self._find_model_for_field(field_name)
-            if target_model and hasattr(target_model, field_name):
+            if target_model:  # הסרנו את הבדיקה המיותרת
                 actual_name = self._get_actual_field_name(target_model, field_name)
                 if actual_name and hasattr(target_model, actual_name):
                     column = getattr(target_model, actual_name)
 
-                is_date = query_params.get(f"{field_name}[$date]") == "true"
-                wildcard_position = query_params.get(f"{field_name}[$wildcard]", "both")
+                    is_date = query_params.get(f"{field_name}[$date]") == "true"
+                    wildcard_position = query_params.get(f"{field_name}[$wildcard]", "both")
 
-                if is_date:
-                    filter_clause = self.filter_ops.handle_date_filter(column, str(param_value), operator)
-                elif operator.upper() in ["LIKE", "ILIKE"]:
-                    filter_clause = self.operators[operator.upper()](column, param_value, wildcard_position)
-                else:
-                    filter_func = self.operators.get(operator, self.operators["eq"])
-                    filter_clause = filter_func(column, param_value)
+                    if is_date:
+                        filter_clause = self.filter_ops.handle_date_filter(column, str(param_value), operator)
+                    elif operator.upper() in ["LIKE", "ILIKE"]:
+                        filter_clause = self.operators[operator.upper()](column, param_value, wildcard_position)
+                    else:
+                        filter_func = self.operators.get(operator, self.operators["eq"])
+                        filter_clause = filter_func(column, param_value)
 
-                if filter_clause is not None:
-                    self.statement = self.statement.where(filter_clause)
+                    if filter_clause is not None:
+                        self.statement = self.statement.where(filter_clause)
 
         return self.statement
 
