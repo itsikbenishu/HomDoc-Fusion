@@ -94,6 +94,7 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             if field_name in HomeDocDimensions.model_fields 
             and field_name not in ['id', 'home_doc_id']
         })
+
         
         session.add(home_doc)
         session.flush()  

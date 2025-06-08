@@ -31,7 +31,7 @@ class FusionOper(Operation):
                         "bathrooms": propertyListing.bathrooms
                     }
 
-                ids_by_external_ids = HomeDocRepository.get_ids_by_external_ids(
+                ids_by_external_ids = residence_repo.get_ids_by_external_ids(
                     external_ids,
                     session
                 )

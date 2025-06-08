@@ -63,8 +63,18 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
     def _to_response(self, home_doc: HomeDoc) -> ResidenceResponse:
         specs = getattr(home_doc, 'specs', None)
         dimensions = getattr(home_doc, 'dimensions', None)
-        
-        return ResidenceResponse.from_models(home_doc, specs, dimensions)
+        listing = getattr(home_doc, 'listing', None)
+        listing_agent = getattr(home_doc, 'listing_agent', None)
+        listing_office = getattr(home_doc, 'listing_office', None)
+        listing_history = getattr(home_doc, 'listing_history', None)
+
+        return ResidenceResponse.from_models(home_doc=home_doc, 
+                                             specs=specs, 
+                                             dimensions=dimensions,
+                                             listing=listing, 
+                                             listing_agent=listing_agent, 
+                                             listing_office=listing_office,
+                                             listing_history=listing_history)
     
     def _validate_entity(self, data: Dict[str, Any]) -> None:
         category = data.get("category")
