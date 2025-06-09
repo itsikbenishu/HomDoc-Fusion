@@ -77,11 +77,35 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         return session.exec(statement).all()
 
     def create(self, data: Dict[str, Any], session: Session) -> HomeDoc:
+        if 'listing_agent' in data:
+            agent = ListingContact(**{
+                field_name: field_value 
+                for field_name, field_value in data.get('listing_agent', {}).items() 
+                if field_name in ListingContact.model_fields 
+                and field_name not in ['id']
+            })
+            session.add(agent)
+            session.flush()  
+
+        if 'listing_office' in data:
+            office = ListingContact(**{
+                field_name: field_value 
+                for field_name, field_value in data.get('listing_office', {}).items() 
+                if field_name in ListingContact.model_fields 
+                and field_name not in ['id']
+            })
+            session.add(office)
+            session.flush()  
+
         home_doc = HomeDoc(**{
             field_name: field_value 
             for field_name, field_value in data.items() 
-            if field_name in HomeDoc.model_fields
+            if field_name in HomeDoc.model_fields 
+            and field_name not in ['id', 'listing_agent_id', 'listing_office_id']
         })
+        home_doc.listing_agent_id = agent.id if agent else None
+        home_doc.listing_office_id = office.id if office else None
+
         specs = ResidenceSpecsAttributes(**{
             field_name: field_value 
             for field_name, field_value in data.items() 
@@ -94,38 +118,75 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             if field_name in HomeDocDimensions.model_fields 
             and field_name not in ['id', 'home_doc_id']
         })
-
+        listings = Listing(**{
+            field_name: field_value 
+            for field_name, field_value in data.items() 
+            if field_name in Listing.model_fields 
+            and field_name not in ['id', 'residence_id']
+        })
+        listings_history = [ListingHistory(**{
+                                field_name: field_value 
+                                for field_name, field_value in data.get('listing_history', {}).items() 
+                                if field_name in ListingHistory.model_fields 
+                                and field_name not in ['id', 'residence_id']
+                                }) 
+                            for data in data.get('listing_history', [])]
         
         session.add(home_doc)
         session.flush()  
         specs.home_doc_id = home_doc.id
         dimensions.home_doc_id = home_doc.id
+        listings.residence_id = home_doc.id
+        for listing_history in listings_history:
+            listing_history.residence_id = home_doc.id
 
         session.add(specs)
         session.add(dimensions)
+        session.add(listings)
+        session.add_all(listings_history)
         session.commit()
 
         return self.get_by_id(home_doc.id, session)
 
     def update(self, item_id: int, data: Dict[str, Any], session: Session) -> HomeDoc:
         home_doc = self.get_by_id(item_id, session)
-        
+
         home_doc_fields = set(HomeDoc.model_fields) - {'id'}
         for field_name, field_value in data.items():
             if field_name in home_doc_fields:
                 setattr(home_doc, field_name, field_value)
+
+
+        self._update_one_to_one_relationship(home_doc.specs, data, {'id', 'home_doc_id'})
+        self._update_one_to_one_relationship(home_doc.dimensions, data, {'id', 'home_doc_id'})
+        self._update_one_to_one_relationship(home_doc.listing, data, {'id', 'residence_id'})
         
-        if hasattr(home_doc, 'specs') and home_doc.specs:
-            specs_fields = set(ResidenceSpecsAttributes.model_fields) - {'id', 'home_doc_id'}
-            for field_name, field_value in data.items():
-                if field_name in specs_fields:
-                    setattr(home_doc.specs, field_name, field_value)
+        self._update_many_to_one_relationship(
+            primary_instance=home_doc,
+            relationship_field="listing_agent",
+            related_model_class=ListingContact,
+            data=data.get("listing_agent", {}),
+            excluded_fields={"id"},
+            session=session,
+            relationship_attr_name="listing_agent",
+        )
+        self._update_many_to_one_relationship(
+            primary_instance=home_doc,
+            relationship_field="listing_office",
+            related_model_class=ListingContact,
+            data=data.get("listing_office", {}),
+            excluded_fields={"id"},
+            session=session,
+            relationship_attr_name="listing_office",
+        )
         
-        if hasattr(home_doc, 'dimensions') and home_doc.dimensions:
-            dimensions_fields = set(HomeDocDimensions.model_fields) - {'id', 'home_doc_id'}
-            for field_name, field_value in data.items():
-                if field_name in dimensions_fields:
-                    setattr(home_doc.dimensions, field_name, field_value)
+        self._update_one_to_many_relationship(
+            primary_instance=home_doc,
+            relationship_field="history",
+            related_model_class=ListingHistory,
+            data=data.get("history", []),
+            excluded_fields={"id", "residence_id"},
+        )
 
         session.commit()
         return home_doc

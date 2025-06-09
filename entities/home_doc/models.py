@@ -55,8 +55,7 @@ class HomeDoc(SQLModel, table=True):
     )    
     listing_agent_id: Optional[int] = Field(default=None, foreign_key="listing_contact.id", ondelete="SET NULL")    
     listing_office_id: Optional[int] = Field(default=None, foreign_key="listing_contact.id", ondelete="SET NULL")
-    listing_history: List["ListingHistory"] = Relationship(back_populates="residence")
-
+    
     father: Optional["HomeDoc"] = Relationship(
         back_populates="children",
         sa_relationship_kwargs={"remote_side": "HomeDoc.id"}

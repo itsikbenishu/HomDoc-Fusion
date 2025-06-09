@@ -1,7 +1,7 @@
 from enum import Enum
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any, TypeVar, Generic, Type
+from typing import List, Optional, Dict, Any, TypeVar, Generic, Type, Set
 from sqlmodel import Session, SQLModel, select
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.sql.selectable import Select
@@ -64,6 +64,89 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
     def update(self, item_id: int, data: Dict[str, Any], session: Session) -> PrimaryModelType:
         pass
 
+    def _update_one_to_one_relationship(self, 
+                                        relationship_instance: SQLModel, 
+                                        data: Dict[str, Any], 
+                                        excluded_fields: Set[str],
+                                        session: Session) -> None:
+        if relationship_instance:
+            fields = set(relationship_instance.model_fields) - excluded_fields
+            for field_name, field_value in data.items():
+                if field_name in fields:
+                    setattr(relationship_instance, field_name, field_value)
+
+    
+    def _update_one_to_many_relationship(
+        self,
+        primary_instance: SQLModel,
+        relationship_field: str,
+        related_model_class: Type[SQLModel],
+        data: List[Dict[str, Any]],
+        excluded_fields: Set[str]
+    ) -> None:
+        children = getattr(primary_instance, relationship_field, None)
+        if children is None:
+            raise ValueError(f"Relationship field '{relationship_field}' not found or not loaded.")
+
+        existing_children = {child.id: child for child in children if child.id is not None}
+        incoming_children = {item['id']: item for item in data if 'id' in item}
+
+        for child_id, child_data in incoming_children.items():
+            if child_id in existing_children:
+                for field_name, field_value in child_data.items():
+                    if field_name not in excluded_fields and hasattr(existing_children[child_id], field_name):
+                        setattr(existing_children[child_id], field_name, field_value)
+
+        for child_data in data:
+            if 'id' not in child_data:
+                new_child = related_model_class(**{
+                    field_name: field_value
+                    for field_name, field_value in child_data.items()
+                    if field_name not in excluded_fields
+                })
+                children.append(new_child)
+
+        for child_id in list(existing_children.keys()):
+            if child_id not in incoming_children:
+                children.remove(existing_children[child_id])
+
+    
+    def _update_many_to_one_relationship(
+        self,
+        primary_instance: SQLModel,
+        relationship_field: str,
+        related_model_class: Type[SQLModel],
+        data: Dict[str, Any],
+        excluded_fields: Set[str],
+        session: Session
+    ) -> None:
+        if not data:
+            return
+
+        if "id" in data:
+            existing = session.get(related_model_class, data["id"])
+            if existing:
+                setattr(primary_instance, relationship_field, existing)
+                return
+
+        relationship_instance = getattr(primary_instance, relationship_field, None)
+
+        if relationship_instance:
+            fields = set(related_model_class.model_fields) - excluded_fields
+            for field_name, field_value in data.items():
+                if field_name in fields:
+                    setattr(relationship_instance, field_name, field_value)
+        else:
+            new_instance = related_model_class(**{
+                field_name: field_value
+                for field_name, field_value in data.items()
+                if field_name in related_model_class.model_fields and field_name not in excluded_fields
+            })
+            session.add(new_instance)
+            session.flush()
+            setattr(primary_instance, relationship_field, new_instance)
+
+    @abstractmethod
     def delete(self, item_id: int, session: Session) -> None:
         pass
     
