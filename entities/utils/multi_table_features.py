@@ -8,6 +8,7 @@ import re
 from entities.utils.single_table_features import SingleTableFeatures
 from entities.utils.filter_operations import FilterOperators
 
+# הוסר: from sqlalchemy.orm import class_mapper
 
 class MultiTableFeatures:
     def __init__(self, base_statement: Select, models: List[Type], main_model: Type, query_params: Optional[Dict[str, Any]] = None):
@@ -38,6 +39,8 @@ class MultiTableFeatures:
                 return model
         return None
 
+    # הפונקציה _get_aliased_column_for_joined_model הוסרה לחלוטין מכאן
+
     def filter(self) -> Select:
         if not self.query_params:
             return self.statement
@@ -51,45 +54,43 @@ class MultiTableFeatures:
         }
 
         for param_name, param_value in query_params.items():
-            match = re.match(r'^(.+)\[\$(.+)]$', param_name)
+            match = re.match(r'^(.*?)(?:\[\$([a-zA-Z0-9_]+)\])?$', param_name)
             if match:
-                field_name, operator = match.groups()
+                field_name = match.group(1)
+                operator = match.group(2) if match.group(2) else "eq"
             else:
-                field_name, operator = param_name, "eq"
+                continue
 
             if operator in ["date", "wildcard"]:
                 continue
 
             target_model = self._find_model_for_field(field_name)
-            if target_model:  # הסרנו את הבדיקה המיותרת
+            if target_model: 
                 actual_name = self._get_actual_field_name(target_model, field_name)
+                column_to_filter = None # אתחול המשתנה
                 if actual_name and hasattr(target_model, actual_name):
-                    column = getattr(target_model, actual_name)
+                    column_to_filter = getattr(target_model, actual_name) # גישה ישירה לעמודה
+                
+                if column_to_filter is None:
+                    print(f"Warning: Could not find column for filtering field '{field_name}' on model '{target_model.__name__}'")
+                    continue 
+                    
+                is_date = query_params.get(f"{field_name}[$date]") == "true"
+                wildcard_position = query_params.get(f"{field_name}[$wildcard]", "both")
 
-                    is_date = query_params.get(f"{field_name}[$date]") == "true"
-                    wildcard_position = query_params.get(f"{field_name}[$wildcard]", "both")
+                filter_clause = None
+                if is_date:
+                    filter_clause = self.filter_ops.handle_date_filter(column_to_filter, str(param_value), operator)
+                elif operator.upper() in ["LIKE", "ILIKE", "NOT_LIKE", "NOT_ILIKE"]:
+                    filter_clause = self.operators[operator.upper()](column_to_filter, param_value, wildcard_position)
+                else:
+                    filter_func = self.operators.get(operator, self.operators["eq"])
+                    filter_clause = filter_func(column_to_filter, param_value)
 
-                    if is_date:
-                        filter_clause = self.filter_ops.handle_date_filter(column, str(param_value), operator)
-                    elif operator.upper() in ["LIKE", "ILIKE"]:
-                        filter_clause = self.operators[operator.upper()](column, param_value, wildcard_position)
-                    else:
-                        filter_func = self.operators.get(operator, self.operators["eq"])
-                        filter_clause = filter_func(column, param_value)
-
-                    if filter_clause is not None:
-                        self.statement = self.statement.where(filter_clause)
+                if filter_clause is not None:
+                    self.statement = self.statement.where(filter_clause)
 
         return self.statement
-
-    def _get_aliased_column_for_joined_model(self, model: Type, field_name: str) -> Optional[ColumnElement]:
-        for from_object in self.statement.froms:
-            if hasattr(from_object, 'element') and hasattr(from_object.element, '__table__'):
-                if from_object.element.__table__ is model.__table__:
-                    actual_name = self._get_actual_field_name(model, field_name)
-                    if actual_name and hasattr(from_object, actual_name):
-                        return getattr(from_object, actual_name)
-        return None
 
     def sort(self) -> Select:
         if "sort" in self.query_params:
@@ -103,19 +104,15 @@ class MultiTableFeatures:
                 target_model = self._find_model_for_field(field_name)
                 if target_model:
                     actual_name = self._get_actual_field_name(target_model, field_name)
+                    column = None # אתחול המשתנה
                     
                     if actual_name and hasattr(target_model, actual_name):
-                        column = None
-                        
-                        if target_model == self.main_model:
-                            column = getattr(target_model, actual_name)
-                        else:
-                            column = self._get_aliased_column_for_joined_model(target_model, field_name)
+                        column = getattr(target_model, actual_name) # גישה ישירה לעמודה
                             
-                        if column is not None:
-                            order_by_clauses.append(desc(column) if is_desc else asc(column))
-                        else:
-                            print(f"Warning: Could not find sort column for field '{field_name}' on model '{target_model.__name__}'")
+                    if column is not None:
+                        order_by_clauses.append(desc(column) if is_desc else asc(column))
+                    else:
+                        print(f"Warning: Could not find sort column for field '{field_name}' on model '{target_model.__name__}'")
                 
             if order_by_clauses:
                 self.statement = self.statement.order_by(*order_by_clauses)
@@ -124,10 +121,8 @@ class MultiTableFeatures:
 
         return self.statement
 
-
     def paginate(self) -> Select:
         paginated = self.single_table_features.paginate()
         self.statement = self.statement.limit(paginated._limit_clause).offset(paginated._offset_clause)
         
         return self.statement
-
