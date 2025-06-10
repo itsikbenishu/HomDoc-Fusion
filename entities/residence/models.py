@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, Enum, Column
 from datetime import datetime
 from entities.home_doc.models import HomeDoc, HomeDocDimensions
 from entities.common.enums import ListingStatusEnum, ListingTypeEnum
@@ -41,8 +41,8 @@ class Listing(SQLModel, table=True):
     residence_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
-        alias="homeDocId",
-        sa_column_kwargs={"name": "homeDocId"}
+        alias="residenceId",
+        sa_column_kwargs={"name": "residenceId"}
     )
     price: Optional[float] = Field(default=None)
     hoa_fee: Optional[float] = Field(
@@ -54,10 +54,9 @@ class Listing(SQLModel, table=True):
     bathrooms: Optional[float] = Field(default=None)
     status: ListingStatusEnum = Field(
         default=ListingStatusEnum.inactive,
-        alias="listingStatus",
-        sa_column_kwargs={"name": "status"}
+        sa_column=Enum(ListingStatusEnum, name='listing_status_enum'),
+        alias="listingStatus"
     )
-
     home_doc: Optional["HomeDoc"] = Relationship(back_populates="listing") 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -69,14 +68,21 @@ Listing.model_rebuild()
 class ListingContact(SQLModel, table=True):
     __tablename__ = "listing_contact"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     name: str = Field(index=True)
     phone: Optional[str] = Field(default=None)
     email: Optional[str] = Field(default=None)
     website: Optional[str] = Field(default=None)
 
-    agent_for_home_docs: List["HomeDoc"] = Relationship(back_populates="listing_agent")
-    office_for_home_docs: List["HomeDoc"] = Relationship(back_populates="listing_office")
+    agent_for_home_docs: List["HomeDoc"] = Relationship(
+        back_populates="listing_agent",
+        sa_relationship_kwargs={"foreign_keys": "[HomeDoc.listing_agent_id]"}
+    )
+
+    office_for_home_docs: List["HomeDoc"] = Relationship(
+        back_populates="listing_office",
+        sa_relationship_kwargs={"foreign_keys": "[HomeDoc.listing_office_id]"}
+    )
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -94,7 +100,7 @@ class ListingHistory(SQLModel, table=True):
     listing_type: Optional[ListingTypeEnum] = Field(
         default=None,
         alias="listingType",
-        sa_column_kwargs={"name": "listingType"}
+        sa_column=Column("listingType", Enum(ListingTypeEnum, name="listing_type_enum", values_callable=lambda obj: [e.value for e in obj]))
     )
     listed_date: Optional[datetime] = Field(
         default=None,
@@ -114,7 +120,9 @@ class ListingHistory(SQLModel, table=True):
 
     residence_id: int = Field(
         foreign_key="home_docs.id",
-        ondelete="CASCADE"
+        ondelete="CASCADE",
+        alias="residenceId",
+        sa_column_kwargs={"name": "residenceId"}
     )
     residence: "HomeDoc" = Relationship(back_populates="listing_history")
 
@@ -138,11 +146,26 @@ class ListingHistoryResponse(SQLModel):
     id: int
     event: Optional[str] = None
     price: Optional[float] = None
-    listing_type: Optional[ListingTypeEnum] = None
-    listed_date: Optional[datetime] = None
-    removed_date: Optional[datetime] = None
-    days_on_market: Optional[int] = None
-
+    listing_type: Optional[ListingTypeEnum] = Field(
+        default=None,
+        alias="listingType",
+        sa_column=Column("listingType", Enum(ListingTypeEnum, name="listing_type_enum", values_callable=lambda obj: [e.value for e in obj]))
+    )
+    listed_date: Optional[datetime] = Field(
+        default=None,
+        alias="listedDate",
+        sa_column_kwargs={"name": "listedDate"}
+    )
+    removed_date: Optional[datetime] = Field(
+        default=None,
+        alias="removedDate",
+        sa_column_kwargs={"name": "removedDate"}
+    )
+    days_on_market: Optional[int] = Field(
+        default=None,
+        alias="daysOnMarket",
+        sa_column_kwargs={"name": "daysOnMarket"}
+    )
 class ListingResponse(SQLModel):
     id: int
     price: Optional[float] = None

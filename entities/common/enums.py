@@ -15,8 +15,8 @@ class HomeDocTypeEnum(str, enum.Enum):
     ROOM_INSTRUMENT = "ROOM_INSTRUMENT"
 
 class ListingStatusEnum(str, enum.Enum):
-    active = "Active"
-    inactive = "Inactive"
+    active = "active"
+    inactive = "inactive"
 
 class ListingTypeEnum(str, enum.Enum):
     standard = "Standard"

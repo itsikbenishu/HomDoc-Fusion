@@ -82,6 +82,15 @@ class MultiTableFeatures:
 
         return self.statement
 
+    def _get_aliased_column_for_joined_model(self, model: Type, field_name: str) -> Optional[ColumnElement]:
+        for from_object in self.statement.froms:
+            if hasattr(from_object, 'element') and hasattr(from_object.element, '__table__'):
+                if from_object.element.__table__ is model.__table__:
+                    actual_name = self._get_actual_field_name(model, field_name)
+                    if actual_name and hasattr(from_object, actual_name):
+                        return getattr(from_object, actual_name)
+        return None
+
     def sort(self) -> Select:
         if "sort" in self.query_params:
             sort_fields = self.query_params["sort"].split(",")
@@ -94,9 +103,19 @@ class MultiTableFeatures:
                 target_model = self._find_model_for_field(field_name)
                 if target_model:
                     actual_name = self._get_actual_field_name(target_model, field_name)
+                    
                     if actual_name and hasattr(target_model, actual_name):
-                        column = getattr(target_model, actual_name)
-                        order_by_clauses.append(desc(column) if is_desc else asc(column))
+                        column = None
+                        
+                        if target_model == self.main_model:
+                            column = getattr(target_model, actual_name)
+                        else:
+                            column = self._get_aliased_column_for_joined_model(target_model, field_name)
+                            
+                        if column is not None:
+                            order_by_clauses.append(desc(column) if is_desc else asc(column))
+                        else:
+                            print(f"Warning: Could not find sort column for field '{field_name}' on model '{target_model.__name__}'")
                 
             if order_by_clauses:
                 self.statement = self.statement.order_by(*order_by_clauses)
@@ -104,6 +123,7 @@ class MultiTableFeatures:
             self.statement = self.statement.order_by(desc(self.main_model.created_at))
 
         return self.statement
+
 
     def paginate(self) -> Select:
         paginated = self.single_table_features.paginate()

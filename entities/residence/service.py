@@ -1,16 +1,20 @@
 from sqlmodel import Session
+from entities.utils.decorators import singleton
+from typing import Dict, Any, List, Optional
 from entities.abstracts.service import Service
 from entities.residence.models import ResidenceResponse
 from entities.residence.repository import ResidenceRepository
+from entities.common.enums import HomeDocTypeEnum
 from entities.home_doc.models import HomeDoc
-from entities.utils.decorators import singleton
-from typing import Dict, Any, List, Optional
-from sqlalchemy.exc import NoResultFound
 
 @singleton
 class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
     def __init__(self, repo: ResidenceRepository):
         super().__init__(repo)
+        self.types = [ HomeDocTypeEnum.PROPERTY,
+                       HomeDocTypeEnum.FLOOR,
+                       HomeDocTypeEnum.APARTMENT, 
+                       HomeDocTypeEnum.ROOM ]
 
     def get_by_id(self, item_id: int, session: Session) -> Optional[ResidenceResponse]:
         home_doc = self.repo.get_by_id(item_id, session)
@@ -21,8 +25,7 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> Optional[List[ResidenceResponse]]:
         if query_params is None:
             query_params = {}
-        query_params["category[$NOTLIKE]"] = "ROOM\\_"
-        query_params["category[$wildcard]"] = "end"
+        query_params["type[$in]"] = self.types
         
         results = self.repo.get(session, query_params)
         if not results:

@@ -2,7 +2,8 @@ from enum import Enum
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any, TypeVar, Generic, Type, Set
-from sqlmodel import Session, SQLModel, select
+from sqlmodel import Session, SQLModel, select, and_
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.sql.selectable import Select
 from entities.abstracts.repository import Repository
@@ -60,6 +61,50 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
     def create(self, data: Dict[str, Any], session: Session) -> PrimaryModelType:
         pass
 
+    def _create_one_to_one_relationship(
+        self,
+        model: Type[SQLModel],
+        data: dict,
+        excluded_fields: list[str]
+    ) -> SQLModel:
+        new_instance = model(**{
+            field_name: field_value 
+            for field_name, field_value in data.items() 
+            if field_name in model.model_fields 
+            and field_name not in excluded_fields
+        })
+        return new_instance
+
+    def _create_one_to_many_relationship(
+        self,
+        model: Type[SQLModel],
+        data: dict,
+        excluded_fields: list[str]
+    ) -> SQLModel:
+        new_instances = [self._create_one_to_one_relationship(model, item, excluded_fields) 
+                         for item in data]
+        return new_instances
+
+
+    def _create_or_get_many_to_one_relationship(
+        self,
+        session: Session,
+        model: Type[SQLModel],
+        data: dict,
+        unique_fields: list[str]
+    ) -> SQLModel:
+        create_or_update = insert(model).values(**data).on_conflict_do_nothing(
+            index_elements=unique_fields
+        ).returning(model.id)
+
+        result = session.exec(create_or_update).first()
+
+        if result:
+            return session.get(model, result[0])
+
+        filters = [getattr(model, f) == data[f] for f in unique_fields]
+        return session.exec(select(model).where(and_(*filters))).first()
+    
     @abstractmethod
     def update(self, item_id: int, data: Dict[str, Any], session: Session) -> PrimaryModelType:
         pass
@@ -74,7 +119,6 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
             for field_name, field_value in data.items():
                 if field_name in fields:
                     setattr(relationship_instance, field_name, field_value)
-
     
     def _update_one_to_many_relationship(
         self,
@@ -110,7 +154,6 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
             if child_id not in incoming_children:
                 children.remove(existing_children[child_id])
 
-    
     def _update_many_to_one_relationship(
         self,
         primary_instance: SQLModel,
