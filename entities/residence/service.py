@@ -34,19 +34,25 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
 
     def create(self, data: ResidenceCreate, session: Session) -> ResidenceResponse:
         try:
-            self._validate_entity(data)
+            # המרת ResidenceCreate ל-dict
             residence_dict = data.model_dump(exclude_unset=True)
-            return self.repo.create(residence_dict, session)
+            self._validate_entity(residence_dict)
+            
+            home_doc = self.repo.create(residence_dict, session)
+            return self._to_response(home_doc)
         except ValueError:
             raise
         except Exception as e:
             session.rollback()
             raise Exception(f"Error creating residence: {str(e)}")
 
-    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> ResidenceResponse:
+    def update(self, item_id: int, data: ResidenceUpdate, session: Session) -> ResidenceResponse:
         try:
-            self._validate_entity(data)
-            home_doc = self.repo.update(item_id, data, session)
+            # המרת ResidenceUpdate ל-dict
+            residence_dict = data.model_dump(exclude_unset=True)
+            self._validate_entity(residence_dict)
+            
+            home_doc = self.repo.update(item_id, residence_dict, session)
             if not home_doc:
                 raise ValueError(f"Residence with id {item_id} not found")
             return self._to_response(home_doc)

@@ -37,7 +37,7 @@ async def create_residence(
     residence: ResidenceCreate,
     session: Session = Depends(get_session)
 ):
-    return get_residence_srv().create(ResidenceCreate, session)
+    return get_residence_srv().create(residence, session)
 
 @api_router.put("/api/residence/{residence_id}")
 async def update_residence(
@@ -45,7 +45,7 @@ async def update_residence(
     residence: ResidenceUpdate,
     session: Session = Depends(get_session)
 ):
-    return get_residence_srv().update(residence_id, ResidenceUpdate, session)
+    return get_residence_srv().update(residence_id, residence, session)
 
 @api_router.delete("/api/residence/{residence_id}")
 async def delete_residence(
