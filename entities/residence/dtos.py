@@ -17,26 +17,11 @@ class ListingHistoryResponse(SQLModel):
     id: int
     event: Optional[str] = None
     price: Optional[float] = None
-    listing_type: Optional[ListingTypeEnum] = Field(
-        default=None,
-        alias="listingType",
-        sa_column=Column("listingType", Enum(ListingTypeEnum, name="listing_type_enum", values_callable=lambda obj: [e.value for e in obj]))
-    )
-    listed_date: Optional[datetime] = Field(
-        default=None,
-        alias="listedDate",
-        sa_column_kwargs={"name": "listedDate"}
-    )
-    removed_date: Optional[datetime] = Field(
-        default=None,
-        alias="removedDate",
-        sa_column_kwargs={"name": "removedDate"}
-    )
-    days_on_market: Optional[int] = Field(
-        default=None,
-        alias="daysOnMarket",
-        sa_column_kwargs={"name": "daysOnMarket"}
-    )
+    listing_type: Optional[ListingTypeEnum] = Field(default=None, alias="listingType")
+    listed_date: Optional[datetime] = Field(default=None, alias="listedDate")
+    removed_date: Optional[datetime] = Field(default=None, alias="removedDate")
+    days_on_market: Optional[int] = Field(default=None, alias="daysOnMarket")
+
 class ListingResponse(SQLModel):
     id: int
     price: Optional[float] = None
@@ -180,26 +165,10 @@ class ListingContactCreate(SQLModel):
 class ListingHistoryCreate(SQLModel):
     event: Optional[str] = None
     price: Optional[float] = None
-    listing_type: Optional[ListingTypeEnum] = Field(
-        default=None,
-        alias="listingType",
-        sa_column=Column("listingType", Enum(ListingTypeEnum, name="listing_type_enum", values_callable=lambda obj: [e.value for e in obj]))
-    )
-    listed_date: Optional[datetime] = Field(
-        default=None,
-        alias="listedDate",
-        sa_column_kwargs={"name": "listedDate"}
-    )
-    removed_date: Optional[datetime] = Field(
-        default=None,
-        alias="removedDate",
-        sa_column_kwargs={"name": "removedDate"}
-    )
-    days_on_market: Optional[int] = Field(
-        default=None,
-        alias="daysOnMarket",
-        sa_column_kwargs={"name": "daysOnMarket"}
-    )
+    listing_type: Optional[ListingTypeEnum] = Field(default=None, alias="listingType")
+    listed_date: Optional[datetime] = Field(default=None, alias="listedDate")
+    removed_date: Optional[datetime] = Field(default=None, alias="removedDate")
+    days_on_market: Optional[int] = Field(default=None, alias="daysOnMarket")
     
     model_config = ConfigDict(
         str_strip_whitespace=True,
@@ -281,29 +250,13 @@ class ListingContactUpdate(SQLModel):
 
 
 class ListingHistoryUpdate(SQLModel):
-    id: int
     event: Optional[str] = None
     price: Optional[float] = None
-    listing_type: Optional[ListingTypeEnum] = Field(
-        default=None,
-        alias="listingType",
-        sa_column=Column("listingType", Enum(ListingTypeEnum, name="listing_type_enum", values_callable=lambda obj: [e.value for e in obj]))
-    )
-    listed_date: Optional[datetime] = Field(
-        default=None,
-        alias="listedDate",
-        sa_column_kwargs={"name": "listedDate"}
-    )
-    removed_date: Optional[datetime] = Field(
-        default=None,
-        alias="removedDate",
-        sa_column_kwargs={"name": "removedDate"}
-    )
-    days_on_market: Optional[int] = Field(
-        default=None,
-        alias="daysOnMarket",
-        sa_column_kwargs={"name": "daysOnMarket"}
-    )
+    listing_type: Optional[ListingTypeEnum] = Field(default=None, alias="listingType")
+    listed_date: Optional[datetime] = Field(default=None, alias="listedDate")
+    removed_date: Optional[datetime] = Field(default=None, alias="removedDate")
+    days_on_market: Optional[int] = Field(default=None, alias="daysOnMarket")
+
     
     model_config = ConfigDict(
         str_strip_whitespace=True,
