@@ -13,6 +13,11 @@ api_router = APIRouter(
     tags=["HomeDocs"]
 )
 
+def get_home_doc_srv():
+    home_doc_repo = HomeDocRepository.get_instance()
+    home_doc_srv = HomeDocService.get_instance(home_doc_repo)
+    return home_doc_srv
+
 @api_router.get("/api/home_docs/newest-properties")
 async def get_newest_properties(
     count: int = Query(10, ge=1, le=100),
@@ -38,11 +43,6 @@ async def get_oldest_properties(
         "offset": 0
     }
     return get_home_doc_srv().get(session, query_dict)
-
-def get_home_doc_srv():
-    home_doc_repo = HomeDocRepository.get_instance()
-    home_doc_srv = HomeDocService.get_instance(home_doc_repo)
-    return home_doc_srv
 
 @api_router.get("/api/home_docs")
 async def get_home_docs(

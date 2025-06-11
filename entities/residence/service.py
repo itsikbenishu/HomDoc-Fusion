@@ -2,19 +2,19 @@ from sqlmodel import Session
 from entities.utils.decorators import singleton
 from typing import Dict, Any, List, Optional
 from entities.abstracts.service import Service
-from entities.residence.models import ResidenceResponse
+from entities.residence.dtos import ResidenceResponse, ResidenceCreate, ResidenceUpdate
 from entities.residence.repository import ResidenceRepository
 from entities.common.enums import HomeDocTypeEnum
 from entities.home_doc.models import HomeDoc
 
 @singleton
-class ResidenceService(Service[ResidenceResponse, ResidenceRepository, ResidenceResponse, ResidenceResponse]):
+class ResidenceService(Service[ResidenceResponse, ResidenceRepository, ResidenceCreate, ResidenceUpdate]):
     def __init__(self, repo: ResidenceRepository):
         super().__init__(repo)
-        self.types = [ HomeDocTypeEnum.PROPERTY,
+        self.types = [HomeDocTypeEnum.PROPERTY,
                        HomeDocTypeEnum.FLOOR,
                        HomeDocTypeEnum.APARTMENT, 
-                       HomeDocTypeEnum.ROOM ]
+                       HomeDocTypeEnum.ROOM]
 
     def get_by_id(self, item_id: int, session: Session) -> Optional[ResidenceResponse]:
         home_doc = self.repo.get_by_id(item_id, session)
@@ -32,11 +32,11 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
             return None
         return [self._to_response(home_doc) for home_doc in results]
 
-    def create(self, data: Dict[str, Any], session: Session) -> ResidenceResponse:
+    def create(self, data: ResidenceCreate, session: Session) -> ResidenceResponse:
         try:
             self._validate_entity(data)
-            home_doc = self.repo.create(data, session)
-            return self._to_response(home_doc)
+            residence_dict = data.model_dump(exclude_unset=True)
+            return self.repo.create(residence_dict, session)
         except ValueError:
             raise
         except Exception as e:

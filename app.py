@@ -6,12 +6,14 @@ import uvicorn
 from app_config import app_settings
 from fusion.rental_listing.run_pipeline import run_pipeline
 from entities.home_doc.api import api_router as home_doc_api_router
+from entities.residence.api import api_router as residence_api_router
 
 app = FastAPI(
     title="Fusion HomeDoc API",
     openapi_tags=[
         {"name": "HomeDocsFusion", "description": "HomeDocs Fusion"},
         {"name": "HomeDocs", "description": "Basic HomeDocs management"},
+        {"name": "Residence", "description": "Residence management"},
     ]
 )
 templates = Jinja2Templates(directory="templates")
@@ -39,7 +41,7 @@ async def run_fusion():
 
 app.include_router(api_router_fusion)
 app.include_router(home_doc_api_router)
-#app.include_router(residence_api_router)
+app.include_router(residence_api_router)
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="127.0.0.1", port=5000, reload=True)
