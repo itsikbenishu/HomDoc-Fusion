@@ -8,7 +8,7 @@ from entities.common.enums import HomeDocTypeEnum
 from entities.home_doc.models import HomeDoc
 
 @singleton
-class ResidenceService(Service[ResidenceResponse, ResidenceRepository]):
+class ResidenceService(Service[ResidenceResponse, ResidenceRepository, ResidenceResponse, ResidenceResponse]):
     def __init__(self, repo: ResidenceRepository):
         super().__init__(repo)
         self.types = [ HomeDocTypeEnum.PROPERTY,

@@ -5,9 +5,10 @@ from entities.utils.decorators import singleton
 from entities.home_doc.models import HomeDoc
 from sqlalchemy.exc import NoResultFound
 from entities.home_doc.repository import HomeDocRepository
+from entities.home_doc.dtos import HomeDocCreate, HomeDocUpdate
 
 @singleton
-class HomeDocService(Service[HomeDoc, HomeDocRepository]):
+class HomeDocService(Service[HomeDoc, HomeDocRepository, HomeDocCreate, HomeDocUpdate]):
     def __init__(self, repo: HomeDocRepository):
         super().__init__(repo)
 
@@ -17,23 +18,25 @@ class HomeDocService(Service[HomeDoc, HomeDocRepository]):
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc]:
         return self.repo.get(session, query_params)
 
-    def create(self, data: Dict[str, Any], session: Session) -> HomeDoc:
+    def create(self, data: HomeDocCreate, session: Session) -> HomeDoc:
         try:
             self._validate_entity(data)
-            home_doc = HomeDoc(**data)
+            home_doc_dict = data.model_dump(exclude_unset=True)
+            home_doc = HomeDoc(**home_doc_dict)
             return self.repo.create(home_doc, session)
         except Exception as e:
             session.rollback()
             raise Exception(f"Error creating HomeDoc: {str(e)}")
 
-    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> HomeDoc:
+    def update(self, item_id: int, data: HomeDocUpdate, session: Session) -> HomeDoc:
         try:
             self._validate_entity(data)
             home_doc = self.repo.get_by_id(item_id, session)
             if not home_doc:
                 raise ValueError(f"HomeDoc with id {item_id} not found")
             
-            for field_name, value in data.items():
+            home_doc_dict = data.model_dump(exclude_unset=True)
+            for field_name, value in home_doc_dict.items():
                 if hasattr(home_doc, field_name):
                     setattr(home_doc, field_name, value)
 

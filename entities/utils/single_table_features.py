@@ -2,8 +2,6 @@ from typing import Dict, Any, Optional, Type, Callable
 from sqlmodel import select
 from sqlalchemy import desc, asc
 from sqlalchemy.sql.elements import ColumnElement
-from datetime import datetime
-from zoneinfo import ZoneInfo
 import re
 from entities.utils.filter_operations import FilterOperators
 

@@ -49,7 +49,7 @@ class HomeDoc(SQLModel, table=True):
     )
     description: Optional[str] = Field(default=None)
     extra_data: Optional[List[Dict[str, str]]] = Field(
-        default=[],
+        default=list,
         alias="extraData",
         sa_column=Column(JSON, name="extraData")
     )    

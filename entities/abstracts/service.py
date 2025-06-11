@@ -6,10 +6,12 @@ from entities.abstracts.repository import Repository
 
 
 ResponseType = TypeVar("ResponseType")  
+CreateDTO = TypeVar("CreateDTO")  
+UpdateDTO = TypeVar("UpdateDTO")  
 RepoType = TypeVar("RepoType", bound=Repository)
 
 @singleton
-class Service(Generic[ResponseType, RepoType], ABC):
+class Service(Generic[ResponseType, RepoType, CreateDTO, UpdateDTO], ABC):
     def __init__(self, repo: RepoType):
         self.repo = repo
 
@@ -22,11 +24,11 @@ class Service(Generic[ResponseType, RepoType], ABC):
         pass
 
     @abstractmethod
-    def create(self, data: Dict[str, Any], session: Session) -> ResponseType:
+    def create(self, data: CreateDTO, session: Session) -> ResponseType:
         pass
 
     @abstractmethod
-    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> ResponseType:
+    def update(self, item_id: int, data: UpdateDTO, session: Session) -> ResponseType:
         pass
 
     @abstractmethod
