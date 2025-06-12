@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, Type, Callable
+from typing import Dict, Any, Optional, Type, Callable, List
 from sqlmodel import select
 from sqlalchemy import desc, asc
 from sqlalchemy.sql.elements import ColumnElement
@@ -6,15 +6,15 @@ import re
 from entities.utils.filter_operations import FilterOperators
 
 class SingleTableFeatures:    
-    def __init__(self, model: Type, query_params: Optional[Dict[str, Any]] = None):
+    def __init__(self, model: Type, date_fields: Optional[List[str]] = None, query_params: Optional[Dict[str, Any]] = None):
         DEFAULT_LIMIT = 25
         MAX_LIMIT = 100
         DEFAULT_TIMEZONE_STR = "Asia/Jerusalem"
 
         self.model = model
         self.query_params = query_params or {}
-        self.statement = select(model)
-
+        self.date_fields = date_fields or []
+        
         self.page = int(self.query_params.get("page", 1))
         requested_limit = int(self.query_params.get("limit", DEFAULT_LIMIT))
         self.limit = min(requested_limit, MAX_LIMIT)
@@ -22,6 +22,21 @@ class SingleTableFeatures:
         tz_str = self.query_params.get("tz", DEFAULT_TIMEZONE_STR)
         self.filter_ops = FilterOperators(tz_str)
         self.operators = self.filter_ops.operators
+
+        fields_str = self.query_params.get("fields")
+        if fields_str:
+            field_names = [f.strip() for f in fields_str.split(",")]
+            columns = []
+            for field_name in field_names:
+                if hasattr(self.model, field_name):
+                    columns.append(getattr(self.model, field_name))
+            if columns:
+                self.statement = select(*columns)
+            else:
+                self.statement = select(self.model)
+        else:
+            self.statement = select(self.model)
+
 
     def filter(self) -> 'SingleTableFeatures':
         if not self.query_params:
@@ -49,7 +64,7 @@ class SingleTableFeatures:
             if operator in ["date", "wildcard"]:
                 continue
 
-            is_date = query_params.get(f"{field_name}[$date]") == "true"
+            is_date = field_name in self.date_fields
             wildcard_position  = query_params.get(f"{field_name}[$wildcard]", "both")
 
             if is_date:

@@ -1,33 +1,45 @@
 from typing import List, Type, Dict, Any, Optional, Set, Callable
 from sqlalchemy.sql import Select
 from sqlalchemy import desc, asc
-from sqlalchemy.sql.elements import ColumnElement
-from datetime import datetime
-from zoneinfo import ZoneInfo
 import re
 from entities.utils.single_table_features import SingleTableFeatures
-from entities.utils.filter_operations import FilterOperators
-
-# הוסר: from sqlalchemy.orm import class_mapper
 
 class MultiTableFeatures:
-    def __init__(self, base_statement: Select, models: List[Type], main_model: Type, query_params: Optional[Dict[str, Any]] = None):
+    def __init__(self, base_statement: Select, models: List[Type], main_model: Type, date_fields: Optional[List[str]] = None, query_params: Optional[Dict[str, Any]] = None):
         self.models = models
         self.main_model = main_model
-        self.statement = base_statement
+        self.date_fields = date_fields or []
         self.query_params = query_params or {}
         self.single_table_features = SingleTableFeatures(self.main_model, self.query_params)
 
         self.filter_ops = self.single_table_features.filter_ops
         self.operators = self.single_table_features.operators
 
+        fields_str = self.query_params.get("fields")
+        if fields_str:
+            field_names = [f.strip() for f in fields_str.split(",")]
+            columns = []
+            for field_name in field_names:
+                for model in self.models:
+                    if hasattr(model, field_name):
+                        columns.append(getattr(model, field_name))
+                        break
+
+            if columns:
+                self.statement = Select(*columns).select_from(base_statement.froms[0])
+            else:
+                self.statement = base_statement
+        else:
+            self.statement = base_statement
+
+
     def build(self) -> Select:
         return self.statement
 
     def _get_actual_field_name(self, model: Type, name: str) -> Optional[str]:
-        for field in model.__fields__.values():
-            if field.alias == name:
-                return field.name
+        for field_name, field_info in model.model_fields.items():
+            if field_info.alias == name:
+                return field_name
         if hasattr(model, name):
             return name
         return None
@@ -38,8 +50,6 @@ class MultiTableFeatures:
             if actual_name and hasattr(model, actual_name):
                 return model
         return None
-
-    # הפונקציה _get_aliased_column_for_joined_model הוסרה לחלוטין מכאן
 
     def filter(self) -> Select:
         if not self.query_params:
@@ -67,15 +77,15 @@ class MultiTableFeatures:
             target_model = self._find_model_for_field(field_name)
             if target_model: 
                 actual_name = self._get_actual_field_name(target_model, field_name)
-                column_to_filter = None # אתחול המשתנה
+                column_to_filter = None
                 if actual_name and hasattr(target_model, actual_name):
-                    column_to_filter = getattr(target_model, actual_name) # גישה ישירה לעמודה
+                    column_to_filter = getattr(target_model, actual_name) 
                 
                 if column_to_filter is None:
                     print(f"Warning: Could not find column for filtering field '{field_name}' on model '{target_model.__name__}'")
                     continue 
                     
-                is_date = query_params.get(f"{field_name}[$date]") == "true"
+                is_date = field_name in self.date_fields
                 wildcard_position = query_params.get(f"{field_name}[$wildcard]", "both")
 
                 filter_clause = None
@@ -104,10 +114,10 @@ class MultiTableFeatures:
                 target_model = self._find_model_for_field(field_name)
                 if target_model:
                     actual_name = self._get_actual_field_name(target_model, field_name)
-                    column = None # אתחול המשתנה
+                    column = None 
                     
                     if actual_name and hasattr(target_model, actual_name):
-                        column = getattr(target_model, actual_name) # גישה ישירה לעמודה
+                        column = getattr(target_model, actual_name) 
                             
                     if column is not None:
                         order_by_clauses.append(desc(column) if is_desc else asc(column))

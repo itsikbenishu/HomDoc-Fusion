@@ -17,7 +17,7 @@ class HomeDocRepository(SingleEntityRepository[HomeDoc]):
         return home_doc
     
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc]:
-        features = SingleTableFeatures(HomeDoc, query_params)
+        features = SingleTableFeatures(HomeDoc,["createdAt", "updatedAt"], query_params)
         statement = features.filter().sort().paginate()
         results = session.exec(statement)
         result_list = list(results)

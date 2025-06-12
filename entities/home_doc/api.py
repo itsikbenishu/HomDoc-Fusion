@@ -1,8 +1,6 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request, Depends
 from sqlmodel import Session
-from fastapi import Depends
-from fastapi import Request
-from typing import Optional
+from typing import Optional, Dict, Any
 from db.session import get_session
 from entities.home_doc.repository import HomeDocRepository
 from entities.home_doc.service import HomeDocService
@@ -44,12 +42,53 @@ async def get_oldest_properties(
     }
     return get_home_doc_srv().get(session, query_dict)
 
-@api_router.get("/api/home_docs")
+@api_router.get(
+    "/api/home_docs/",
+    summary="Retrieve a list of HomeDocs with advanced filtering, sorting, and pagination",
+    description="""
+Fetch a list of HomeDocs from the database with support for:
+
+**Query Parameters:**
+- `page`: Page number (default: 1)
+- `limit`: Number of results per page (default: 10)
+- `sort`: Comma-separated fields to sort by. Use `-` for descending.  
+  Example: `-createdAt,interiorEntityKey`
+- `tz`: Timezone for date filtering (default: Asia/Jerusalem)
+- `fields`: (optional) Specify which fields to return
+- Any other field will be treated as a filter.
+
+**Supported filter operators (use square brackets):**
+- `[$eq]`: Equal (default)
+- `[$ne]`: Not equal
+- `[$gt]`, `[$gte]`, `[$lt]`, `[$lte]`: Greater/Less than
+- `[$in]`, `[$not_in]`: Accepts comma-separated lists
+- `[$like]`, `[$ilike]`: SQL-style pattern matching
+- `[$wildcard]=start|end|both`: Wildcard matching position for LIKE/ILIKE filters
+
+**Example request:**
+/api/home_docs?page=2&limit=25&sort=-createdAt&createdAt[$gte]=2024-01-01&fields=id,name,description
+"""
+)
 async def get_home_docs(
-    request: Request, 
-    session: Session = Depends(get_session)
+    request: Request,
+    session: Session = Depends(get_session),
+    limit: int = Query(10, ge=1, le=100),
+    page: int = Query(1, ge=1),
+    sort: Optional[str] = Query(None),
+    fields: Optional[str] = Query(None),
+    tz: Optional[str] = Query("Asia/Jerusalem"),
 ):
     query_dict = dict(request.query_params)
+    
+    query_dict.setdefault("limit", str(limit))
+    query_dict.setdefault("page", str(page))
+    if sort:
+        query_dict.setdefault("sort", sort)
+    if fields:
+        query_dict.setdefault("fields", fields)
+    if tz:
+        query_dict.setdefault("tz", tz)
+
     return get_home_doc_srv().get(session, query_dict)
 
 @api_router.get("/api/home_docs/{home_doc_id}")

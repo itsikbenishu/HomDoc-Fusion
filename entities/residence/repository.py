@@ -73,7 +73,8 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             self._base_query, 
             all_models, 
             self.primary_model, 
-            query_params
+            date_fields=["createdAt", "updatedAt"],
+            query_params=query_params
         )
         statement = features.filter()
         statement = features.sort() 
