@@ -10,6 +10,9 @@ from db.session import engine
 from datetime import datetime
 from typing import Dict, Any, List
 
+# Import the DTO classes
+from entities.residence.dtos import ResidenceCreate, ResidenceUpdate, ListingHistoryCreate, ListingContactCreate
+
 
 class FusionOper(Operation):
     def __init__(self):
@@ -27,77 +30,91 @@ class FusionOper(Operation):
                 # EXAMPLE 1: CREATE - Creating a comprehensive residence with all relationships
                 # =============================================================================
                 print("=== CREATE RESIDENCE EXAMPLE ===")
-                
-                create_data = {
+
+                # Construct DTO instances for nested objects first
+                listing_agent_create = ListingContactCreate(
+                    name="Sarah Johnson",
+                    phone="+1-305-555-0123",
+                    email="sarah.johnson@luxuryrealty.com",
+                    website="https://sarahjohnson.luxuryrealty.com"
+                )
+
+                listing_office_create = ListingContactCreate(
+                    name="Luxury Realty Miami",
+                    phone="+1-305-555-9999",
+                    email="info@luxuryrealty.com",
+                    website="https://luxuryrealty.com"
+                )
+
+                listing_history_entries_create = [
+                    ListingHistoryCreate(
+                        event="Listed",
+                        price=2500000.0,
+                        listing_type=ListingTypeEnum.standard, # Use enum member directly
+                        listed_date=datetime(2024, 1, 15),
+                        days_on_market=0
+                    ),
+                    ListingHistoryCreate(
+                        event="Price Reduced",
+                        price=2350000.0,
+                        listing_type=ListingTypeEnum.standard, # Use enum member directly
+                        listed_date=datetime(2024, 3, 1),
+                        days_on_market=45
+                    )
+                ]
+
+                # The 'ListingCreate' DTO usually encapsulates the price, bedrooms, bathrooms, status
+                # If your DTO expects a separate ListingCreate object, construct it here.
+                # Based on dtos.py, ResidenceCreate directly takes price, bedrooms, etc.
+                # So we won't need a separate ListingCreate DTO for the main fields directly within ResidenceCreate
+
+                create_data = ResidenceCreate(
                     # Basic HomeDoc fields
-                    "external_id": "EXT-12345",
-                    "interior_entity_key": "luxury-villa-miami-2024",
-                    "category": HomeDocCategoriesEnum.ONE_STORY_HOUSE,
-                    "type": HomeDocTypeEnum.PROPERTY,
-                    "description": "Stunning luxury villa with ocean views in Miami Beach",
-                    "extra_data": [
+                    external_id="EXT-12345",
+                    interior_entity_key="luxury-villa-miami-2024",
+                    category=HomeDocCategoriesEnum.ONE_STORY_HOUSE,
+                    type=HomeDocTypeEnum.PROPERTY,
+                    description="Stunning luxury villa with ocean views in Miami Beach",
+                    extra_data=[
                         {"key": "view_type", "value": "oceanfront"},
                         {"key": "parking_spaces", "value": "3"},
                         {"key": "pool", "value": "yes"},
                         {"key": "elevator", "value": "no"}
                     ],
-                    
+
                     # ResidenceSpecsAttributes fields
-                    "area": 450.5,
-                    "sub_entities_quantity": 8,  # rooms count
-                    "construction_year": 2020,
-                    
+                    area=450.5,
+                    sub_entities_quantity=8,  # rooms count
+                    construction_year=2020,
+
                     # HomeDocDimensions fields
-                    "length": 25,
-                    "width": 18,
-                    
+                    length=25,
+                    width=18,
+
                     # Listing fields
-                    "price": 2500000.0,
-                    "hoa_fee": 850.0,
-                    "bedrooms": 4.0,
-                    "bathrooms": 3.5,
-                    "status": ListingStatusEnum.active,
-                    
-                    # Listing Agent
-                    "listing_agent": {
-                        "name": "Sarah Johnson",
-                        "phone": "+1-305-555-0123",
-                        "email": "sarah.johnson@luxuryrealty.com",
-                        "website": "https://sarahjohnson.luxuryrealty.com"
-                    },
-                    
-                    # Listing Office
-                    "listing_office": {
-                        "name": "Luxury Realty Miami",
-                        "phone": "+1-305-555-9999",
-                        "email": "info@luxuryrealty.com",
-                        "website": "https://luxuryrealty.com"
-                    },
-                    
-                    # Listing History
-                    "listing_history": [
-                        {
-                            "event": "Listed",
-                            "price": 2500000.0,
-                            "listing_type": ListingTypeEnum.standard.value,
-                            "listed_date": datetime(2024, 1, 15),
-                            "days_on_market": 0
-                        },
-                        {
-                            "event": "Price Reduced",
-                            "price": 2350000.0,
-                            "listing_type": ListingTypeEnum.standard.value,
-                            "listed_date": datetime(2024, 3, 1),
-                            "days_on_market": 45
-                        }
-                    ]
-                }
-                print("Status value to insert:", create_data["status"])
-                print("Status value type:", type(create_data["status"]))
+                    price=2500000.0,
+                    hoa_fee=850.0,
+                    bedrooms=4.0,
+                    bathrooms=3.5,
+                    status=ListingStatusEnum.active, # Use enum member directly
+
+                    # Listing Agent (passed as a DTO)
+                    listing_agent=listing_agent_create,
+
+                    # Listing Office (passed as a DTO)
+                    listing_office=listing_office_create,
+
+                    # Listing History (list of DTOs)
+                    listing_history=listing_history_entries_create
+                )
+                
+                print("Status value to insert:", create_data.status) # Access as attribute
+                print("Status value type:", type(create_data.status))
                 print("Status enum value:", ListingStatusEnum.active.value)
                 print("Status enum value:", ListingStatusEnum.active)
                 print("Status enum value:", ListingStatusEnum)
 
+                # Pass the DTO instance directly
                 created_residence = residence_srv.create(create_data, session)
                 print(f"Created residence ID: {created_residence.id}")
                 print(f"Created residence key: {created_residence.interior_entity_key}")
@@ -107,6 +124,7 @@ class FusionOper(Operation):
                 
                 # =============================================================================
                 # EXAMPLE 2: GET BY ID - Retrieving a specific residence with all data
+                # (No change needed here as it retrieves DTO from service)
                 # =============================================================================
                 print("\n=== GET BY ID EXAMPLE ===")
                 
@@ -124,30 +142,31 @@ class FusionOper(Operation):
 
                 # =============================================================================
                 # EXAMPLE 3: GET WITH FILTERS - Advanced querying with multiple filters
+                # (No change needed here as it takes a dict for query_params)
                 # =============================================================================
                 print("\n=== GET WITH FILTERS EXAMPLES ===")
                 
                 # Example 3a: Price range filter
                 price_filter_params = {
-                    "price[$gte]": 1000000,
-                    "price[$lte]": 3000000,
-                    "status": ListingStatusEnum.active,
+                    "listings.price[$gte]": 1000000,
+                    "listings.price[$lte]": 3000000,
+                    "listings.status": "active",
                     "limit": 10,
-                    "sort": "-price,area"
+                    "sort": "-listings.price"
                 }
                 
                 expensive_residences = residence_srv.get(session, price_filter_params)
                 if expensive_residences:
                     print(f"Found {len(expensive_residences)} expensive active residences")
                     for residence in expensive_residences[:3]:  # Show first 3
-                        print(f"  - {residence.interior_entity_key}: ${residence.listing.price:,.2f}")
+                        print(f"   - {residence.interior_entity_key}: ${residence.listing.price:,.2f}")
                 
                 # Example 3b: Area and construction year filter
                 modern_large_filter = {
                     "area[$gte]": 300,
                     "construction_year[$gte]": 2015,
                     "bedrooms[$gte]": 3,
-                    "category": HomeDocCategoriesEnum.ONE_STORY_HOUSE,
+                    "category": HomeDocCategoriesEnum.ONE_STORY_HOUSE.value, # Use .value for query params
                     "sort": "-construction_year"
                 }
                 
@@ -155,7 +174,7 @@ class FusionOper(Operation):
                 if modern_houses:
                     print(f"Found {len(modern_houses)} modern large houses")
                     for house in modern_houses[:2]:
-                        print(f"  - {house.interior_entity_key}: {house.area}sqm, built {house.construction_year}")
+                        print(f"   - {house.interior_entity_key}: {house.area}sqm, built {house.construction_year}")
                 
                 # Example 3c: Text search with LIKE operator
                 search_filter = {
@@ -168,7 +187,7 @@ class FusionOper(Operation):
                 if villa_residences:
                     print(f"Found {len(villa_residences)} villas")
                     for villa in villa_residences:
-                        print(f"  - {villa.interior_entity_key}")
+                        print(f"   - {villa.interior_entity_key}")
 
                 # Example 3d: Date-based filtering
                 recent_filter = {
@@ -186,68 +205,75 @@ class FusionOper(Operation):
                 # =============================================================================
                 print("\n=== UPDATE RESIDENCE EXAMPLE ===")
                 
-                update_data = {
+                # Construct DTO instances for nested objects for update
+                # For existing nested objects, you need their IDs.
+                listing_agent_update = ListingContactCreate( # Or ListingContactUpdate if you have it for partial updates
+                    id=retrieved_residence.listing_agent.id, # Pass the existing ID
+                    phone="+1-305-555-0124",  # Updated phone
+                    website="https://sarahjohnson-updated.luxuryrealty.com"
+                    # name and email are optional if not changing, but if DTO has them as required, include them
+                )
+                
+                # The 'history' list needs to contain existing entries with their IDs,
+                # and new entries without IDs.
+                history_updates = []
+                for entry in retrieved_residence.listing_history:
+                    history_updates.append(
+                        ListingHistoryCreate( # Use create DTO for both new and existing, passing ID for existing
+                            id=entry.id,
+                            event=entry.event,
+                            price=entry.price,
+                            listing_type=entry.listing_type,
+                            listed_date=entry.listed_date,
+                            days_on_market=entry.days_on_market
+                        )
+                    )
+                # Add new entry
+                history_updates.append(
+                    ListingHistoryCreate(
+                        event="Renovated & Re-listed",
+                        price=2750000.0,
+                        listing_type=ListingTypeEnum.standard, # Use enum member directly
+                        listed_date=datetime(2024, 6, 1),
+                        days_on_market=90
+                    )
+                )
+
+                update_data = ResidenceUpdate(
                     # Update basic fields
-                    "description": "UPDATED: Luxury villa with renovated kitchen and new pool",
-                    "extra_data": [
+                    description="UPDATED: Luxury villa with renovated kitchen and new pool",
+                    extra_data=[
                         {"key": "view_type", "value": "oceanfront"},
                         {"key": "parking_spaces", "value": "4"},  # Updated
                         {"key": "pool", "value": "yes"},
-                        {"key": "elevator", "value": "yes"},      # New feature
-                        {"key": "renovated", "value": "2024"}    # New
+                        {"key": "elevator", "value": "yes"},       # New feature
+                        {"key": "renovated", "value": "2024"}      # New
                     ],
                     
                     # Update specs
-                    "area": 475.0,  # Increased area after renovation
-                    "sub_entities_quantity": 9,  # Added one more room
+                    area=475.0,  # Increased area after renovation
+                    sub_entities_quantity=9,  # Added one more room
                     
                     # Update dimensions
-                    "length": 27,  # Extended
-                    "width": 18,
+                    length=27,  # Extended
+                    width=18,
                     
-                    # Update listing
-                    "price": 2750000.0,  # Price increase due to renovations
-                    "hoa_fee": 950.0,    # HOA increase
-                    "bedrooms": 5.0,     # Added bedroom
-                    "bathrooms": 4.0,    # Added bathroom
+                    # Update listing (if ListingUpdate DTO exists and expects these fields)
+                    # Based on dtos.py, ResidenceUpdate takes a 'listing' object.
+                    price=2750000.0,   # Price increase due to renovations
+                    hoa_fee=950.0,     # HOA increase
+                    bedrooms=5.0,      # Added bedroom
+                    bathrooms=4.0,     # Added bathroom
+                    status=ListingStatusEnum.active, # Use enum member directly
                     
-                    # Update agent info
-                    "listing_agent": {
-                        "id": retrieved_residence.listing_agent.id,  # Existing agent
-                        "phone": "+1-305-555-0124",  # Updated phone
-                        "website": "https://sarahjohnson-updated.luxuryrealty.com"
-                    },
+                    # Update agent info (pass DTO)
+                    listing_agent=listing_agent_update,
                     
-                    # Add new history entry
-                    "history": [
-                        # Keep existing entries by including their IDs
-                        {
-                            "id": retrieved_residence.listing_history[0].id,
-                            "event": "Listed",
-                            "price": 2500000.0,
-                            "listing_type": ListingTypeEnum.standard.value,
-                            "listed_date": datetime(2024, 1, 15),
-                            "days_on_market": 0
-                        },
-                        {
-                            "id": retrieved_residence.listing_history[1].id,
-                            "event": "Price Reduced",
-                            "price": 2350000.0,
-                            "listing_type": ListingTypeEnum.standard.value,
-                            "listed_date": datetime(2024, 3, 1),
-                            "days_on_market": 45
-                        },
-                        # Add new entry (no ID means create new)
-                        {
-                            "event": "Renovated & Re-listed",
-                            "price": 2750000.0,
-                            "listing_type": ListingTypeEnum.standard.value,
-                            "listed_date": datetime(2024, 6, 1),
-                            "days_on_market": 90
-                        }
-                    ]
-                }
+                    # Add new history entry (list of DTOs)
+                    listing_history=history_updates
+                )
                 
+                # Pass the DTO instance directly
                 updated_residence = residence_srv.update(created_residence.id, update_data, session)
                 print(f"Updated residence ID: {updated_residence.id}")
                 print(f"New area: {updated_residence.area} sqm")
@@ -264,48 +290,50 @@ class FusionOper(Operation):
                 # Create multiple residences
                 bulk_residences = []
                 residence_templates = [
-                    {
-                        "interior_entity_key": "condo-downtown-01",
-                        "category": HomeDocCategoriesEnum.RESIDENTIAL_BUILDING,
-                        "type": HomeDocTypeEnum.PROPERTY,
-                        "description": "Modern downtown condo with city views",
-                        "area": 120.0,
-                        "construction_year": 2018,
-                        "price": 450000.0,
-                        "bedrooms": 2.0,
-                        "bathrooms": 2.0,
-                        "status": ListingStatusEnum.active
-                    },
-                    {
-                        "interior_entity_key": "townhouse-suburbs-02",
-                        "category": HomeDocCategoriesEnum.MULTI_STORY_HOUSE,
-                        "type": HomeDocTypeEnum.PROPERTY,
-                        "description": "Family-friendly townhouse in quiet neighborhood",
-                        "area": 180.0,
-                        "construction_year": 2019,
-                        "price": 650000.0,
-                        "bedrooms": 3.0,
-                        "bathrooms": 2.5,
-                        "status": ListingStatusEnum.active
-                    }
+                    ResidenceCreate( # Use ResidenceCreate DTO
+                        interior_entity_key="condo-downtown-01",
+                        category=HomeDocCategoriesEnum.RESIDENTIAL_BUILDING,
+                        type=HomeDocTypeEnum.PROPERTY,
+                        description="Modern downtown condo with city views",
+                        area=120.0,
+                        construction_year=2018,
+                        price=450000.0,
+                        bedrooms=2.0,
+                        bathrooms=2.0,
+                        status=ListingStatusEnum.active
+                    ),
+                    ResidenceCreate( # Use ResidenceCreate DTO
+                        interior_entity_key="townhouse-suburbs-02",
+                        category=HomeDocCategoriesEnum.MULTI_STORY_HOUSE,
+                        type=HomeDocTypeEnum.PROPERTY,
+                        description="Family-friendly townhouse in quiet neighborhood",
+                        area=180.0,
+                        construction_year=2019,
+                        price=650000.0,
+                        bedrooms=3.0,
+                        bathrooms=2.5,
+                        status=ListingStatusEnum.active
+                    )
                 ]
                 
                 for template in residence_templates:
                     try:
+                        # Pass the DTO instance directly
                         residence = residence_srv.create(template, session)
                         bulk_residences.append(residence)
                         print(f"Created: {residence.interior_entity_key} - ${residence.listing.price:,.2f}")
                     except Exception as e:
-                        print(f"Failed to create {template['interior_entity_key']}: {e}")
+                        print(f"Failed to create {template.interior_entity_key}: {e}") # Access as attribute
 
                 # =============================================================================
                 # EXAMPLE 6: ADVANCED FILTERING AND ANALYTICS
+                # (No change needed here as it takes a dict for query_params)
                 # =============================================================================
                 print("\n=== ADVANCED ANALYTICS EXAMPLE ===")
                 
                 # Get all active listings for market analysis
                 market_analysis_filter = {
-                    "status": ListingStatusEnum.active,
+                    "status": ListingStatusEnum.active.value, # Use .value for query params
                     "price[$gte]": 100000,  # Minimum reasonable price
                     "area[$gte]": 50,       # Minimum reasonable area
                     "limit": 100,
@@ -321,13 +349,13 @@ class FusionOper(Operation):
                     total_area = sum(r.area for r in market_residences if r.area)
                     avg_price_per_sqm = total_price / total_area if total_area > 0 else 0
                     
-                    print(f"  Average price per sqm: ${avg_price_per_sqm:,.2f}")
+                    print(f"   Average price per sqm: ${avg_price_per_sqm:,.2f}")
                     
                     # Price ranges
                     prices = [r.listing.price for r in market_residences if r.listing.price]
                     if prices:
-                        print(f"  Price range: ${min(prices):,.2f} - ${max(prices):,.2f}")
-                        print(f"  Average price: ${sum(prices)/len(prices):,.2f}")
+                        print(f"   Price range: ${min(prices):,.2f} - ${max(prices):,.2f}")
+                        print(f"   Average price: ${sum(prices)/len(prices):,.2f}")
 
                 # =============================================================================
                 # EXAMPLE 7: ERROR HANDLING AND VALIDATION
@@ -336,12 +364,14 @@ class FusionOper(Operation):
                 
                 # Try to create invalid residence (should fail validation)
                 try:
-                    invalid_data = {
-                        "interior_entity_key": "invalid-residence",
-                        "category": "ROOM_KITCHEN",  # Invalid for residence
-                        "type": HomeDocTypeEnum.PROPERTY,
-                        "description": "This should fail"
-                    }
+                    invalid_data = ResidenceCreate( # Use ResidenceCreate DTO
+                        interior_entity_key="invalid-residence",
+                        category=HomeDocCategoriesEnum.ROOM_KITCHEN,   # Invalid for residence
+                        type=HomeDocTypeEnum.PROPERTY,
+                        description="This should fail",
+                        # Provide dummy required fields, or the DTO validation will fail first
+                        price=1.0, bedrooms=1.0, bathrooms=1.0, status=ListingStatusEnum.active
+                    )
                     residence_srv.create(invalid_data, session)
                 except ValueError as e:
                     print(f"Validation error caught: {e}")
@@ -352,7 +382,9 @@ class FusionOper(Operation):
                 
                 # Try to update non-existent residence
                 try:
-                    residence_srv.update(99999, {"description": "test"}, session)
+                    # Need to provide a valid ResidenceUpdate DTO even for a non-existent ID
+                    # The service will likely raise an error when the ID is not found.
+                    residence_srv.update(99999, ResidenceUpdate(description="test"), session)
                 except Exception as e:
                     print(f"Update error caught: {e}")
 

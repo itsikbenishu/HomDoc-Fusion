@@ -4,8 +4,9 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any, TypeVar, Generic, Type, Set
 from sqlmodel import Session, SQLModel, select, and_
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, aliased
 from sqlalchemy.sql.selectable import Select
+from collections import defaultdict
 from entities.abstracts.repository import Repository
 
 class RelationshipType(Enum):
@@ -23,6 +24,7 @@ class RelationshipConfig:
     relationship_type: RelationshipType
     load_strategy: LoadStrategy
     relationship_field: str
+    join_for_filter_or_sort: bool = False
 
 PrimaryModelType = TypeVar("PrimaryModelType", bound=SQLModel)
 
@@ -38,14 +40,45 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
 
     def _build_base_query(self) -> Select:
         query = select(self.primary_model)
+        model_usage_count = defaultdict(int)
+        alias_map = {}
 
         for rel_config in self.relationships:
-            field = getattr(self.primary_model, rel_config.relationship_field)
+            model_key = rel_config.model.__name__
+            model_usage_count[model_key] += 1
+
+        for rel_config in self.relationships:
+            field_name = rel_config.relationship_field
+            model_cls = rel_config.model
+            model_key = model_cls.__name__
+
+            alias_instance = None
+            if model_usage_count[model_key] > 1:
+                if field_name not in alias_map:
+                    alias_map[field_name] = aliased(model_cls)
+                alias_instance = alias_map[field_name]
+
+            try:
+                field = getattr(self.primary_model, field_name)
+            except AttributeError:
+                raise Exception(f"Field '{field_name}' does not exist on {self.primary_model.__name__}")
+
+            if rel_config.join_for_filter_or_sort:
+                if alias_instance:
+                    query = query.join(field.of_type(alias_instance), isouter=True)
+                else:
+                    query = query.join(field, isouter=True)
 
             if rel_config.load_strategy == LoadStrategy.JOINED:
-                query = query.options(joinedload(field))
+                if alias_instance:
+                    query = query.options(joinedload(field.of_type(alias_instance)))
+                else:
+                    query = query.options(joinedload(field))
             elif rel_config.load_strategy == LoadStrategy.SELECT_IN:
-                query = query.options(selectinload(field))
+                if alias_instance:
+                    query = query.options(selectinload(field.of_type(alias_instance)))
+                else:
+                    query = query.options(selectinload(field))
 
         return query
 

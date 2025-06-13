@@ -176,19 +176,6 @@ class ListingHistoryCreate(SQLModel):
         populate_by_name=True
     )
 
-class ListingCreate(SQLModel):
-    price: Optional[float] = None
-    hoa_fee: Optional[float] = None
-    bedrooms: Optional[float] = None
-    bathrooms: Optional[float] = None
-    status: ListingStatusEnum
-
-    model_config = ConfigDict(
-        str_strip_whitespace=True,
-        use_enum_values=True,
-        populate_by_name=True
-    )
-
 class ResidenceCreate(SQLModel):
     external_id: Optional[str] = None
     interior_entity_key: str
@@ -204,7 +191,11 @@ class ResidenceCreate(SQLModel):
     length: Optional[int] = None
     width: Optional[int] = None
 
-    listing: Optional[ListingCreate] = None
+    price: Optional[float] = None
+    hoa_fee: Optional[float] = None
+    bedrooms: Optional[float] = None
+    bathrooms: Optional[float] = None
+    status: ListingStatusEnum
     
     listing_agent: Optional[ListingContactCreate] = None
     listing_office: Optional[ListingContactCreate] = None
@@ -264,29 +255,6 @@ class ListingHistoryUpdate(SQLModel):
         populate_by_name=True
     )
 
-
-class ListingUpdate(SQLModel):
-    id: int
-    price: Optional[float] = None
-    hoa_fee: Optional[float] = None
-    bedrooms: Optional[float] = None
-    bathrooms: Optional[float] = None
-    status: ListingStatusEnum
-
-    @field_validator('status')
-    @classmethod
-    def validate_status(cls, v):
-        if not v:
-            raise ValueError('status cannot be empty')
-        return v
-    
-    model_config = ConfigDict(
-        str_strip_whitespace=True,
-        use_enum_values=True,
-        populate_by_name=True
-    )
-
-
 class ResidenceUpdate(SQLModel):
     external_id: Optional[str] = None
     description: Optional[str] = None
@@ -299,12 +267,25 @@ class ResidenceUpdate(SQLModel):
     length: Optional[int] = None
     width: Optional[int] = None
 
-    listing: Optional[ListingUpdate] = None
-    
+    id: int
+    price: Optional[float] = None
+    hoa_fee: Optional[float] = None
+    bedrooms: Optional[float] = None
+    bathrooms: Optional[float] = None
+    status: ListingStatusEnum
+
     listing_agent: Optional[ListingContactUpdate] = None
     listing_office: Optional[ListingContactUpdate] = None
     
     listing_history: List[ListingHistoryUpdate] = Field(default_factory=list)
+
+    @field_validator('status')
+    @classmethod
+    def validate_status(cls, v):
+        if not v:
+            raise ValueError('status cannot be empty')
+        return v
+    
 
     model_config = ConfigDict(
         str_strip_whitespace=True,

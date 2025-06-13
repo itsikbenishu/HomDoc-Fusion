@@ -16,25 +16,28 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
                 model=ResidenceSpecsAttributes,
                 relationship_type=RelationshipType.ONE_TO_ONE,
                 load_strategy=LoadStrategy.JOINED,
-                relationship_field="specs"
+                relationship_field="specs",
+                join_for_filter_or_sort=True
             ),
             RelationshipConfig(
                 model=HomeDocDimensions,
                 relationship_type=RelationshipType.ONE_TO_ONE,
                 load_strategy=LoadStrategy.JOINED,
-                relationship_field="dimensions"
+                relationship_field="dimensions",
+                join_for_filter_or_sort=True
+            ),
+            RelationshipConfig(
+                model=Listing,
+                relationship_type=RelationshipType.ONE_TO_ONE,
+                load_strategy=LoadStrategy.JOINED,
+                relationship_field="listing",
+                join_for_filter_or_sort=True
             ),
             RelationshipConfig(
                 model=HomeDoc,
                 relationship_type=RelationshipType.ONE_TO_MANY,
                 load_strategy=LoadStrategy.SELECT_IN,
                 relationship_field="children"
-            ),
-            RelationshipConfig(
-                model=Listing,
-                relationship_type=RelationshipType.ONE_TO_ONE,
-                load_strategy=LoadStrategy.JOINED,
-                relationship_field="listing"
             ),
             RelationshipConfig(
                 model=ListingHistory,
@@ -46,13 +49,15 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
                 model=ListingContact,
                 relationship_type=RelationshipType.MANY_TO_ONE,
                 load_strategy=LoadStrategy.JOINED,
-                relationship_field="listing_agent"
+                relationship_field="listing_agent",
+                join_for_filter_or_sort=True
             ),
             RelationshipConfig(
                 model=ListingContact,
                 relationship_type=RelationshipType.MANY_TO_ONE,
                 load_strategy=LoadStrategy.JOINED,
-                relationship_field="listing_office"
+                relationship_field="listing_office",
+                join_for_filter_or_sort=True
             ),
         ]
         self.types = [HomeDocTypeEnum.PROPERTY, 
@@ -79,6 +84,8 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         statement = features.filter()
         statement = features.sort() 
         statement = features.paginate()
+
+        print(statement.compile(compile_kwargs={"literal_binds": True}))
 
         return session.exec(statement).all()
 
