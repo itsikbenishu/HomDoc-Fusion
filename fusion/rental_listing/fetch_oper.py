@@ -25,9 +25,9 @@ class FetchOper(Operation):
         if self._is_payment_date_passed(str(rentcast_stats["next_payment_date"])):
             response = self._fetch(self._property_type, limit, offset)
             rentcast_stats["api_calls_number"] = 1
-            rentcast_stats["offset"] = offset +  limit
+            rentcast_stats["offset_value"] = offset +  limit
             update_row_by_id("rentcast_stats", rentcast_stats, 1)
-            output = response.text
+            output = response.json()
         elif rentcast_stats["api_calls_number"] >= rentcast_stats["api_calls_max_number"]:    
             with open(f'{self._folder}/{self._api_example_file}.json', 'r') as api_example_file:
                 api_example = json.load(api_example_file)
@@ -37,7 +37,7 @@ class FetchOper(Operation):
             rentcast_stats["api_calls_number"] = rentcast_stats["api_calls_number"] + 1
             rentcast_stats["offset"] = offset +  limit
             update_row_by_id("rentcast_stats", rentcast_stats, 1)
-            output = response.text
+            output = response.json()
 
         print("new rentcast_stats:")
         print(rentcast_stats)

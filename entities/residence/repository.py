@@ -1,5 +1,7 @@
 from sqlmodel import Session,select
 from typing import List, Optional, Dict, Any
+from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from entities.abstracts.expanded_entity_repository import ExpandedEntityRepository
 from entities.abstracts.expanded_entity_repository import RelationshipConfig, RelationshipType, LoadStrategy
 from entities.home_doc.models import HomeDoc, HomeDocDimensions
@@ -84,10 +86,6 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         statement = features.filter()
         statement = features.sort() 
         statement = features.paginate()
-
-        print("==========statement:")
-        print(statement.compile(compile_kwargs={"literal_binds": True}))
-        print("==========")
 
         return session.exec(statement).all()
 
@@ -187,7 +185,18 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             foreign_key_field="residence_id"
         )
 
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError as e:
+            if "unique_listing_entry" in str(e):
+                session.rollback()
+                raise HTTPException(
+                    status_code=409,
+                    detail="Listing history entry already exists for this residence and date"
+                )
+            else:
+                raise
+
         return home_doc
 
     def delete(self, item_id: int, session: Session) -> None:

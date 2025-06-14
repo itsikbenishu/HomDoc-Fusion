@@ -181,33 +181,10 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
         if children is None:
             raise ValueError(f"Relationship field '{relationship_field}' not found or not loaded.")
 
-        existing_children = {child.id: child for child in children if child.id is not None}
-        new_children = [item for item in data if "id" not in item]
-        incoming_children = {item['id']: item for item in data if 'id' in item}
         parent_id_field = foreign_key_field
-
-        print("==========_update_one_to_many_relationship:")
-        print("data:")
-        print(data)
-        print("children:")
-        print(children)
-        print("existing_children:")
-        print(existing_children)
-        print("new_children:")
-        print(new_children)
-        print("incoming_children:")
-        print(incoming_children)
-        print("parent_id_field:")
-        print(parent_id_field)
-        print("==========")
-
-        for child_id, child_data in incoming_children.items():
-            if child_id in existing_children:
-                for field_name, field_value in child_data.items():
-                    if field_name not in excluded_fields and hasattr(existing_children[child_id], field_name):
-                        setattr(existing_children[child_id], field_name, field_value)
-
-        for child_data in new_children:
+        children.clear()
+        
+        for child_data in data:
             new_child = related_model_class(**{
                 field_name: field_value
                 for field_name, field_value in child_data.items()
@@ -215,10 +192,6 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
             })
             setattr(new_child, parent_id_field, primary_instance.id)
             children.append(new_child)
-
-        for child_id in list(existing_children.keys()):
-            if child_id not in incoming_children:
-                children.remove(existing_children[child_id])
 
     def _update_many_to_one_relationship(
         self,
