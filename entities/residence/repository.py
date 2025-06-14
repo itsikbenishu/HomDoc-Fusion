@@ -85,7 +85,9 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         statement = features.sort() 
         statement = features.paginate()
 
+        print("==========statement:")
         print(statement.compile(compile_kwargs={"literal_binds": True}))
+        print("==========")
 
         return session.exec(statement).all()
 
@@ -155,7 +157,6 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             if field_name in home_doc_fields:
                 setattr(home_doc, field_name, field_value)
 
-
         self._update_one_to_one_relationship(home_doc.specs, data, {'id', 'home_doc_id'})
         self._update_one_to_one_relationship(home_doc.dimensions, data, {'id', 'home_doc_id'})
         self._update_one_to_one_relationship(home_doc.listing, data, {'id', 'residence_id'})
@@ -166,8 +167,7 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             related_model_class=ListingContact,
             data=data.get("listing_agent", {}),
             excluded_fields={"id"},
-            session=session,
-            relationship_attr_name="listing_agent",
+            session=session
         )
         self._update_many_to_one_relationship(
             primary_instance=home_doc,
@@ -175,16 +175,16 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             related_model_class=ListingContact,
             data=data.get("listing_office", {}),
             excluded_fields={"id"},
-            session=session,
-            relationship_attr_name="listing_office",
+            session=session
         )
-        
+
         self._update_one_to_many_relationship(
             primary_instance=home_doc,
-            relationship_field="history",
+            relationship_field="listing_history",
             related_model_class=ListingHistory,
-            data=data.get("history", []),
+            data=data.get("listing_history", []),
             excluded_fields={"id", "residence_id"},
+            foreign_key_field="residence_id"
         )
 
         session.commit()

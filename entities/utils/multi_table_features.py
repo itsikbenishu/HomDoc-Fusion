@@ -1,5 +1,6 @@
 from typing import List, Type, Dict, Any, Optional
 from sqlalchemy.sql import Select
+from sqlalchemy.inspection import inspect
 from sqlalchemy import desc, asc
 import re
 from entities.utils.single_table_features import SingleTableFeatures
@@ -40,23 +41,15 @@ class MultiTableFeatures:
         columns = {}
         for model in self.models:
             model_name = model.__name__
-            for field_name, field_info in model.model_fields.items():
-                alias = getattr(field_info, "alias", None) or field_name
-
-                metadata = getattr(field_info, "metadata", [])
-                metadata_dict = dict(metadata)
-                column_name = metadata_dict.get("name", field_name)
-
-                # חיפוש בעמודות של השאילתא - statement.get_final_froms()
-                for from_ in statement.get_final_froms():
-                    if hasattr(from_, "c") and column_name in from_.c:
-                        col = from_.c[column_name]
-                        key_alias = f"{model_name}.{alias}"
-                        key_field = f"{model_name}.{field_name}"
-                        columns[key_alias] = col.label(key_alias)
-                        columns[key_field] = col.label(key_alias)
-                        break
-
+            try:
+                mapper = inspect(model)
+                for column in mapper.columns:
+                    column_name = column.name
+                    alias = column.key  # use key (typically matches alias or field name)
+                    key_alias = f"{model_name}.{alias}"
+                    columns[key_alias] = column.label(key_alias)
+            except Exception as e:
+                print(f"Error inspecting model {model_name}: {e}")
         return columns
 
     def build(self) -> Select:
@@ -177,8 +170,7 @@ class MultiTableFeatures:
                 self.statement = self.statement.order_by(*order_by_clauses)
         else:
             # מיון ברירת מחדל לפי created_at יורד
-            default_col = self.columns_with_aliases.get(f"{self.main_model.__name__}.createdAt") \
-                        or getattr(self.main_model, "created_at", None)
+            default_col = self.columns_with_aliases.get(f"{self.main_model.__name__}.createdAt")
             if default_col is not None:
                 self.statement = self.statement.order_by(desc(default_col))
 

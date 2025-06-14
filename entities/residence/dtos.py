@@ -228,7 +228,7 @@ class ResidenceCreate(SQLModel):
 
 class ListingContactUpdate(SQLModel):
     id: int
-    name: str
+    name: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
@@ -267,7 +267,6 @@ class ResidenceUpdate(SQLModel):
     length: Optional[int] = None
     width: Optional[int] = None
 
-    id: int
     price: Optional[float] = None
     hoa_fee: Optional[float] = None
     bedrooms: Optional[float] = None

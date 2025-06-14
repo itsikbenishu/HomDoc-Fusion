@@ -34,7 +34,6 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
 
     def create(self, data: ResidenceCreate, session: Session) -> ResidenceResponse:
         try:
-            # המרת ResidenceCreate ל-dict
             residence_dict = data.model_dump(exclude_unset=True)
             self._validate_entity(residence_dict)
             
@@ -87,10 +86,11 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
     
     def _validate_entity(self, data: Dict[str, Any]) -> None:
         category = data.get("category")
+        type = data.get("type")
         if category and category.startswith("ROOM_"):
             raise ValueError(f"Category '{category}' is forbidden for residence. it's maybe a chattels entity")
-        if data.get("type") != "PROPERTY":
-            raise ValueError(f"Type '{data.get('type')}' is forbidden for entity' maybe it's a sub entity.")
+        if type and type != "PROPERTY":
+            raise ValueError(f"Type '{type}' is forbidden for entity' maybe it's a sub entity.")
 
     def _validate_sub_entity(self, data: Dict[str, Any]) -> None:
         category = data.get("category")

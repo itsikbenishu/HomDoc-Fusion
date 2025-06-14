@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Import the DTO classes
-from entities.residence.dtos import ResidenceCreate, ResidenceUpdate, ListingHistoryCreate, ListingContactCreate
+from entities.residence.dtos import ResidenceCreate, ResidenceUpdate, ListingHistoryCreate, ListingContactCreate, ListingContactUpdate
 
 
 class FusionOper(Operation):
@@ -148,12 +148,13 @@ class FusionOper(Operation):
                 
                 # Example 3a: Price range filter
                 price_filter_params = {
-                    "listings.price[$gte]": 1000000,
-                    "listings.price[$lte]": 3000000,
-                    "listings.status": "active",
+                    "Listing.price[$gte]": 1000000,
+                    "Listing.price[$lte]": 3000000,
+                    "Listing.status": "active",
                     "limit": 10,
-                    "sort": "-listings.price"
+                    "sort": "-Listing.price"
                 }
+
                 
                 expensive_residences = residence_srv.get(session, price_filter_params)
                 if expensive_residences:
@@ -207,7 +208,7 @@ class FusionOper(Operation):
                 
                 # Construct DTO instances for nested objects for update
                 # For existing nested objects, you need their IDs.
-                listing_agent_update = ListingContactCreate( # Or ListingContactUpdate if you have it for partial updates
+                listing_agent_update = ListingContactUpdate( # Or ListingContactUpdate if you have it for partial updates
                     id=retrieved_residence.listing_agent.id, # Pass the existing ID
                     phone="+1-305-555-0124",  # Updated phone
                     website="https://sarahjohnson-updated.luxuryrealty.com"

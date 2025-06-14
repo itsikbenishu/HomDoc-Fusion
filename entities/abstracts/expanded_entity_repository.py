@@ -52,33 +52,49 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
             model_cls = rel_config.model
             model_key = model_cls.__name__
 
+            # יצירת מפתח ייחודי עבור alias
+            alias_key = f"{model_key}_{field_name}"
+            
             alias_instance = None
             if model_usage_count[model_key] > 1:
-                if field_name not in alias_map:
-                    alias_map[field_name] = aliased(model_cls)
-                alias_instance = alias_map[field_name]
+                if alias_key not in alias_map:
+                    # יצירת alias עם שם ייחודי מפורש
+                    alias_instance = aliased(model_cls, name=alias_key)
+                    alias_map[alias_key] = alias_instance
+                else:
+                    alias_instance = alias_map[alias_key]
 
+            # בדיקת קיום השדה
             try:
                 field = getattr(self.primary_model, field_name)
             except AttributeError:
                 raise Exception(f"Field '{field_name}' does not exist on {self.primary_model.__name__}")
 
-            if rel_config.join_for_filter_or_sort:
-                if alias_instance:
-                    query = query.join(field.of_type(alias_instance), isouter=True)
-                else:
-                    query = query.join(field, isouter=True)
-
-            if rel_config.load_strategy == LoadStrategy.JOINED:
-                if alias_instance:
-                    query = query.options(joinedload(field.of_type(alias_instance)))
-                else:
+            # החלטה: JOIN לפילטרים או loading strategy (לא שניהם עם aliases!)
+            if rel_config.join_for_filter_or_sort and alias_instance:
+                # עם aliases - נעדיף JOIN לפילטרים על פני loading
+                query = query.join(field.of_type(alias_instance), isouter=True)
+            elif rel_config.join_for_filter_or_sort and not alias_instance:
+                # בלי aliases - אפשר גם JOIN וגם loading
+                query = query.join(field, isouter=True)
+                
+                # הוסף loading strategy
+                if rel_config.load_strategy == LoadStrategy.JOINED:
                     query = query.options(joinedload(field))
-            elif rel_config.load_strategy == LoadStrategy.SELECT_IN:
-                if alias_instance:
-                    query = query.options(selectinload(field.of_type(alias_instance)))
-                else:
+                elif rel_config.load_strategy == LoadStrategy.SELECT_IN:
                     query = query.options(selectinload(field))
+            else:
+                # רק loading strategy (בלי JOIN לפילטרים)
+                if rel_config.load_strategy == LoadStrategy.JOINED:
+                    if alias_instance:
+                        query = query.options(joinedload(field.of_type(alias_instance)))
+                    else:
+                        query = query.options(joinedload(field))
+                elif rel_config.load_strategy == LoadStrategy.SELECT_IN:
+                    if alias_instance:
+                        query = query.options(selectinload(field.of_type(alias_instance)))
+                    else:
+                        query = query.options(selectinload(field))
 
         return query
 
@@ -145,8 +161,7 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
     def _update_one_to_one_relationship(self, 
                                         relationship_instance: SQLModel, 
                                         data: Dict[str, Any], 
-                                        excluded_fields: Set[str],
-                                        session: Session) -> None:
+                                        excluded_fields: Set[str]) -> None:
         if relationship_instance:
             fields = set(relationship_instance.model_fields) - excluded_fields
             for field_name, field_value in data.items():
@@ -159,14 +174,32 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
         relationship_field: str,
         related_model_class: Type[SQLModel],
         data: List[Dict[str, Any]],
-        excluded_fields: Set[str]
+        excluded_fields: Set[str],
+        foreign_key_field: str
     ) -> None:
         children = getattr(primary_instance, relationship_field, None)
         if children is None:
             raise ValueError(f"Relationship field '{relationship_field}' not found or not loaded.")
 
         existing_children = {child.id: child for child in children if child.id is not None}
+        new_children = [item for item in data if "id" not in item]
         incoming_children = {item['id']: item for item in data if 'id' in item}
+        parent_id_field = foreign_key_field
+
+        print("==========_update_one_to_many_relationship:")
+        print("data:")
+        print(data)
+        print("children:")
+        print(children)
+        print("existing_children:")
+        print(existing_children)
+        print("new_children:")
+        print(new_children)
+        print("incoming_children:")
+        print(incoming_children)
+        print("parent_id_field:")
+        print(parent_id_field)
+        print("==========")
 
         for child_id, child_data in incoming_children.items():
             if child_id in existing_children:
@@ -174,14 +207,14 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
                     if field_name not in excluded_fields and hasattr(existing_children[child_id], field_name):
                         setattr(existing_children[child_id], field_name, field_value)
 
-        for child_data in data:
-            if 'id' not in child_data:
-                new_child = related_model_class(**{
-                    field_name: field_value
-                    for field_name, field_value in child_data.items()
-                    if field_name not in excluded_fields
-                })
-                children.append(new_child)
+        for child_data in new_children:
+            new_child = related_model_class(**{
+                field_name: field_value
+                for field_name, field_value in child_data.items()
+                if field_name not in excluded_fields
+            })
+            setattr(new_child, parent_id_field, primary_instance.id)
+            children.append(new_child)
 
         for child_id in list(existing_children.keys()):
             if child_id not in incoming_children:
