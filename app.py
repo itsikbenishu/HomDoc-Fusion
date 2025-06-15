@@ -1,10 +1,12 @@
-from fastapi import FastAPI, Request, APIRouter
+from fastapi import FastAPI, Request, APIRouter, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
+from typing import Any
 import uvicorn
 from app_config import app_settings
 from fusion.rental_listing.run_pipeline import run_pipeline
+from entities.abstracts.response_model import ResponseModel
 from entities.home_doc.api import api_router as home_doc_api_router
 from entities.residence.api import api_router as residence_api_router
 
@@ -34,10 +36,14 @@ api_router_fusion = APIRouter(
 async def home(request: Request):
     return templates.TemplateResponse("welcome.html", {"request": request})
 
-@api_router_fusion.get("/api/fuse", tags=["HomeDocsFusion"])
+@api_router_fusion.get("/api/fuse", response_model=ResponseModel[dict[str, Any]] ,tags=["HomeDocsFusion"])
 async def run_fusion():
-    run_pipeline("Single Family")
-    return [{"id": 1, "name": "Itsik"}]
+    try:
+        run_pipeline("Single Family")
+        return ResponseModel(message="HomeDoc retrieved successfully.", data=[{"id": 1, "name": "Itsik"}], status=status.HTTP_200_OK)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve HomeDoc: {e}")
+
 
 app.include_router(api_router_fusion)
 app.include_router(home_doc_api_router)

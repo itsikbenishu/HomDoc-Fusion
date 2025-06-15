@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Query, Request, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
 from sqlmodel import Session
-from typing import Optional
+from typing import Optional, List
 from db.session import get_session
 from entities.home_doc.repository import HomeDocRepository
 from entities.home_doc.service import HomeDocService
 from entities.home_doc.models import HomeDoc, HomeDocTypeEnum
+from entities.abstracts.response_model import ResponseModel
 
 api_router = APIRouter(tags=["HomeDocs"])
 
@@ -14,15 +14,7 @@ def get_home_doc_srv():
     home_doc_srv = HomeDocService.get_instance(home_doc_repo)
     return home_doc_srv
 
-def success_response(message: str, data=None, status_code=status.HTTP_200_OK):
-    content = {"message": message, "data": data}
-    return JSONResponse(status_code=status_code, content=content)
-
-def error_response(message: str, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR):
-    content = {"message": message, "data": None}
-    return JSONResponse(status_code=status_code, content=content)
-
-@api_router.get("/api/home_docs/newest-properties")
+@api_router.get("/api/home_docs/newest-properties", response_model=ResponseModel[List[HomeDoc]])
 async def get_newest_properties(
     count: int = Query(10, ge=1, le=100),
     session: Session = Depends(get_session)
@@ -35,11 +27,11 @@ async def get_newest_properties(
             "offset": 0
         }
         data = get_home_doc_srv().get(session, query_dict)
-        return success_response("Newest properties fetched successfully.", data)
-    except Exception:
-        return error_response("Failed to fetch newest properties.")
+        return ResponseModel(message="Newest properties fetched successfully.", data=data, status=status.HTTP_200_OK)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch newest properties: {e}")
 
-@api_router.get("/api/home_docs/oldest-properties")
+@api_router.get("/api/home_docs/oldest-properties", response_model=ResponseModel[List[HomeDoc]])
 async def get_oldest_properties(
     count: int = Query(10, ge=1, le=100),
     session: Session = Depends(get_session)
@@ -52,13 +44,14 @@ async def get_oldest_properties(
             "offset": 0
         }
         data = get_home_doc_srv().get(session, query_dict)
-        return success_response("Oldest properties fetched successfully.", data)
-    except Exception:
-        return error_response("Failed to fetch oldest properties.")
+        return ResponseModel(message="Oldest properties fetched successfully.", data=data, status=status.HTTP_200_OK)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch oldest properties: {e}")
 
 @api_router.get(
     "/api/home_docs/",
     summary="Retrieve a list of HomeDocs with advanced filtering, sorting, and pagination",
+    response_model=ResponseModel[List[HomeDoc]],
     description="""
 Fetch a list of HomeDocs from the database with support for:
 
@@ -104,35 +97,37 @@ async def get_home_docs(
             query_dict.setdefault("tz", tz)
 
         data = get_home_doc_srv().get(session, query_dict)
-        return success_response("HomeDocs fetched successfully.", data)
-    except Exception:
-        return error_response("Failed to fetch home docs.")
+        return ResponseModel(message="HomeDocs fetched successfully.", data=data, status=status.HTTP_200_OK)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch home docs: {e}")
 
-@api_router.get("/api/home_docs/{home_doc_id}")
+@api_router.get("/api/home_docs/{home_doc_id}", response_model=ResponseModel[HomeDoc])
 async def get_home_doc(
     home_doc_id: int,
     session: Session = Depends(get_session)
 ):
     try:
         data = get_home_doc_srv().get_by_id(home_doc_id, session)
-        return success_response("HomeDoc retrieved successfully.", data)
-    except Exception:
-        return error_response("Failed to retrieve HomeDoc.")
+        if not data:
+            raise HTTPException(status_code=404, detail="HomeDoc not found")
+        return ResponseModel(message="HomeDoc retrieved successfully.", data=data, status=status.HTTP_200_OK)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve HomeDoc: {e}")
 
-@api_router.post("/api/home_docs")
+@api_router.post("/api/home_docs", response_model=ResponseModel[HomeDoc], status_code=status.HTTP_201_CREATED)
 async def create_home_doc(
     home_doc: HomeDoc,
     session: Session = Depends(get_session)
 ):
     try:
         data = get_home_doc_srv().create(home_doc.model_dump(), session)
-        return success_response("HomeDoc created successfully.", data, status.HTTP_201_CREATED)
+        return ResponseModel(message="HomeDoc created successfully.", data=data, status=status.HTTP_201_CREATED)
     except ValueError as ve:
-        return error_response(str(ve), status.HTTP_400_BAD_REQUEST)
-    except Exception:
-        return error_response("Failed to create HomeDoc.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create HomeDoc: {e}")
 
-@api_router.put("/api/home_docs/{home_doc_id}")
+@api_router.put("/api/home_docs/{home_doc_id}", response_model=ResponseModel[HomeDoc])
 async def update_home_doc(
     home_doc_id: int,
     home_doc: HomeDoc,
@@ -140,21 +135,21 @@ async def update_home_doc(
 ):
     try:
         data = get_home_doc_srv().update(home_doc_id, home_doc.model_dump(), session)
-        return success_response("HomeDoc updated successfully.", data)
+        return ResponseModel(message="HomeDoc updated successfully.", data=data, status=status.HTTP_200_OK)
     except ValueError as ve:
-        return error_response(str(ve), status.HTTP_400_BAD_REQUEST)
-    except Exception:
-        return error_response("Failed to update HomeDoc.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update HomeDoc: {e}")
 
-@api_router.delete("/api/home_docs/{home_doc_id}")
+@api_router.delete("/api/home_docs/{home_doc_id}", response_model=ResponseModel[None])
 async def delete_home_doc(
     home_doc_id: int,
     session: Session = Depends(get_session)
 ):
     try:
-        data = get_home_doc_srv().delete(home_doc_id, session)
-        return success_response("HomeDoc deleted successfully.", data)
+        get_home_doc_srv().delete(home_doc_id, session)
+        return ResponseModel(message="HomeDoc deleted successfully.", data=None, status=status.HTTP_200_OK)
     except ValueError as ve:
-        return error_response(str(ve), status.HTTP_400_BAD_REQUEST)
-    except Exception:
-        return error_response("Failed to delete HomeDoc.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete HomeDoc: {e}")
