@@ -1,12 +1,11 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request, Depends, status, HTTPException
 from sqlmodel import Session
-from fastapi import Depends
-from fastapi import Request
-from typing import Optional
+from typing import Optional, List
 from db.session import get_session
 from entities.residence.repository import ResidenceRepository
 from entities.residence.service import ResidenceService
-from entities.residence.dtos import ResidenceCreate, ResidenceUpdate
+from entities.residence.dtos import ResidenceCreate, ResidenceUpdate, ResidenceResponse
+from entities.abstracts.response_model import ResponseModel
 
 api_router = APIRouter(
     tags=["Residence"]
@@ -20,7 +19,8 @@ def get_residence_srv():
 @api_router.get(
     "/api/residence",
     summary="Retrieve a list of Residences with advanced filtering, sorting, and pagination",
-    description="""
+    response_model=ResponseModel[List[ResidenceResponse]],
+        description="""
 Fetch a list of Residences from the database with support for:
 
 **Query Parameters:**
@@ -55,44 +55,104 @@ async def get_residence(
     fields: Optional[str] = Query(None),
     tz: Optional[str] = Query("Asia/Jerusalem"),
 ):
-    query_dict = dict(request.query_params)
+    try:
+        query_dict = dict(request.query_params)
+        query_dict.setdefault("limit", str(limit))
+        query_dict.setdefault("page", str(page))
+        if sort:
+            query_dict.setdefault("sort", sort)
+        if fields:
+            query_dict.setdefault("fields", fields)
+        if tz:
+            query_dict.setdefault("tz", tz)
 
-    query_dict.setdefault("limit", str(limit))
-    query_dict.setdefault("page", str(page))
-    if sort:
-        query_dict.setdefault("sort", sort)
-    if fields:
-        query_dict.setdefault("fields", fields)
-    if tz:
-        query_dict.setdefault("tz", tz)
+        data = get_residence_srv().get(session, query_dict)
+        return ResponseModel(
+            message="Residences fetched successfully",
+            data=data,
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch residences: {e}")
 
-    return get_residence_srv().get(session, query_dict)
-
-@api_router.post("/api/residence") 
+@api_router.post(
+    "/api/residence",
+    response_model=ResponseModel[ResidenceResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_residence(
     residence: ResidenceCreate,
     session: Session = Depends(get_session)
 ):
-    return get_residence_srv().create(residence, session)
+    try:
+        data = get_residence_srv().create(residence, session)
+        return ResponseModel(
+            message="Residence created successfully",
+            data=data,
+            status=status.HTTP_201_CREATED
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create residence: {e}")
 
-@api_router.get("/api/residence/{residence_id}")
-async def get_residence(
+@api_router.get(
+    "/api/residence/{residence_id}",
+    response_model=ResponseModel[ResidenceResponse],
+)
+async def get_residence_by_id(
     residence_id: int,
     session: Session = Depends(get_session)
 ):
-    return get_residence_srv().get_by_id(residence_id, session)
+    try:
+        data = get_residence_srv().get_by_id(residence_id, session)
+        if not data:
+            raise HTTPException(status_code=404, detail="Residence not found")
+        return ResponseModel(
+            message="Residence fetched successfully",
+            data=data,
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve residence: {e}")
 
-@api_router.put("/api/residence/{residence_id}")
+@api_router.put(
+    "/api/residence/{residence_id}",
+    response_model=ResponseModel[ResidenceResponse],
+)
 async def update_residence(
     residence_id: int,
     residence: ResidenceUpdate,
     session: Session = Depends(get_session)
 ):
-    return get_residence_srv().update(residence_id, residence, session)
+    try:
+        data = get_residence_srv().update(residence_id, residence, session)
+        return ResponseModel(
+            message="Residence updated successfully",
+            data=data,
+            status=status.HTTP_200_OK
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update residence: {e}")
 
-@api_router.delete("/api/residence/{residence_id}")
+@api_router.delete(
+    "/api/residence/{residence_id}",
+    response_model=ResponseModel[None],
+)
 async def delete_residence(
     residence_id: int,
     session: Session = Depends(get_session)
 ):
-    return get_residence_srv().delete(residence_id, session)
+    try:
+        get_residence_srv().delete(residence_id, session)
+        return ResponseModel(
+            message="Residence deleted successfully",
+            data=None,
+            status=status.HTTP_200_OK
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete residence: {e}")
