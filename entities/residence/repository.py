@@ -90,6 +90,9 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         return session.exec(statement).all()
 
     def create(self, data: Dict[str, Any], session: Session) -> HomeDoc:
+        agent = None
+        office = None
+
         if 'listing_agent' in data:
             agent = self._create_or_get_many_to_one_relationship(
                 session,
@@ -97,7 +100,7 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
                 data['listing_agent'],
                 unique_fields=["name", "phone", "email"]
             )
-
+        print( 'listing_office' in data, data)
         if 'listing_office' in data:
             office = self._create_or_get_many_to_one_relationship(
                 session,

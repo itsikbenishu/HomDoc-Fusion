@@ -374,7 +374,7 @@ class FusionOper(Operation):
                         price=1.0, bedrooms=1.0, bathrooms=1.0, status=ListingStatusEnum.active
                     )
                     residence_srv.create(invalid_data, session)
-                except ValueError as e:
+                except Exception as e:
                     print(f"Validation error caught: {e}")
                 
                 # Try to get non-existent residence
