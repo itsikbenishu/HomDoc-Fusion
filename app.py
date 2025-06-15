@@ -36,7 +36,7 @@ api_router_fusion = APIRouter(
 async def home(request: Request):
     return templates.TemplateResponse("welcome.html", {"request": request})
 
-@api_router_fusion.get("/api/fuse", response_model=ResponseModel[dict[str, Any]] ,tags=["HomeDocsFusion"])
+@api_router_fusion.get("/api/fuse", response_model=ResponseModel[list[dict[str, Any]]], tags=["HomeDocsFusion"])
 async def run_fusion():
     try:
         run_pipeline("Single Family")

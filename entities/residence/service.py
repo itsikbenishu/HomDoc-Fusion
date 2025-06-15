@@ -34,7 +34,7 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
 
     def create(self, data: ResidenceCreate, session: Session) -> ResidenceResponse:
         try:
-            residence_dict = data.model_dump(exclude_unset=True)
+            residence_dict = data.model_dump(exclude_none=True)
             self._validate_entity(residence_dict)
             
             home_doc = self.repo.create(residence_dict, session)
