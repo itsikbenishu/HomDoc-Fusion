@@ -2,9 +2,17 @@ from fastapi import FastAPI, Request, APIRouter, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from typing import Any
 import uvicorn
 from app_config import app_settings
+from fastapi import FastAPI
+from exceptions import (
+    global_exception_handler,
+    http_exception_handler,
+    validation_exception_handler
+)
 from fusion.rental_listing.run_pipeline import run_pipeline
 from entities.abstracts.response_model import ResponseModel
 from entities.home_doc.api import api_router as home_doc_api_router
@@ -27,6 +35,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_exception_handler(Exception, global_exception_handler)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 api_router_fusion = APIRouter(
     tags=["HomeDocsFusion"]
