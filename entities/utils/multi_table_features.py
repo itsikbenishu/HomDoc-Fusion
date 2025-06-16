@@ -24,6 +24,7 @@ class MultiTableFeatures:
         self.operators = self.single_table_features.operators
 
         self.columns_with_aliases = self._build_columns_with_aliases(base_statement)
+        self.short_name_to_column = self._build_short_name_mapping()
 
         fields_str = self.query_params.get("fields")
         if fields_str:
@@ -36,6 +37,20 @@ class MultiTableFeatures:
             self.statement = Select(*columns).select_from(base_statement.froms[0]) if columns else base_statement
         else:
             self.statement = base_statement
+    def _find_model_for_field(self, field_name: str) -> Optional[Type]:
+        if "." in field_name:
+            model_name, simple_field_name = field_name.split(".", 1)
+            for model in self.models:
+                if model.__name__ == model_name:
+                    return model
+            return None
+
+        for model in self.models:
+            for field_name_in_model, field_info in model.model_fields.items():
+                alias = getattr(field_info, "alias", None) or field_name_in_model
+                if alias == field_name or field_name_in_model == field_name:
+                    return model
+        return None
 
     def _build_columns_with_aliases(self, statement: Select) -> Dict[str, Any]:
         columns = {}
@@ -45,62 +60,34 @@ class MultiTableFeatures:
                 mapper = inspect(model)
                 for column in mapper.columns:
                     column_name = column.name
-                    alias = column.key  # use key (typically matches alias or field name)
+                    alias = column.key  
                     key_alias = f"{model_name}.{alias}"
                     columns[key_alias] = column.label(key_alias)
             except Exception as e:
                 print(f"Error inspecting model {model_name}: {e}")
         return columns
 
+    def _build_short_name_mapping(self) -> Dict[str, Any]:
+        short_mapping = {}
+        for full_name, column in self.columns_with_aliases.items():
+            if "." in full_name:
+                _, field_name = full_name.split(".", 1)
+                if field_name not in short_mapping:
+                    short_mapping[field_name] = column
+                else:
+                    print(f"Warning: field column '{field_name}' is already exist at other model")
+
+        return short_mapping
+
     def build(self) -> Select:
         return self.statement
 
-    def _find_model_for_field(self, field_name: str) -> Optional[Type]:
-        """
-        מוצא את המודל שבו נמצא השדה או האליאס, גם אם השדה כולל שם מודל (model.field)
-        """
-        # אם השדה מגיע בצורה "ModelName.field", נפרק את זה:
+    def _get_column(self, field_name: str):        
         if "." in field_name:
-            model_name, simple_field_name = field_name.split(".", 1)
-            for model in self.models:
-                if model.__name__ == model_name:
-                    return model
+            print(f"Warning: Full format '{field_name}' is not supported. Use field name only.")
             return None
-
-        # אחרת מחפשים לפי alias או שם שדה בכל המודלים
-        for model in self.models:
-            for field_name_in_model, field_info in model.model_fields.items():
-                alias = getattr(field_info, "alias", None) or field_name_in_model
-                if alias == field_name or field_name_in_model == field_name:
-                    return model
-        return None
-
-    def _get_column(self, field_name: str):
-        """
-        מחזיר את העמודה עם label לפי השם או האליאס, תומך ב-"ModelName.field" או רק "field"
-        """
-        print(f"Looking for column: {field_name}")
-        print(f"Looking for column: {self.columns_with_aliases}")
-
-        if "." in field_name:
-            # חיפוש ישיר במפתחות המלאים
-            if field_name in self.columns_with_aliases:
-                return self.columns_with_aliases[field_name]
-            else:
-                # אם אין, אפשר לנסות גם בלי שם מודל, אם קיים שם שדה בלבד
-                _, simple_field = field_name.split(".", 1)
-                # חיפוש לפי שדה בלבד - מחזיר את הראשון שמצאנו במודל כלשהו (פחות מדויק)
-                for key, col in self.columns_with_aliases.items():
-                    if key.endswith(f".{simple_field}"):
-                        return col
-                return None
-        else:
-            # אם אין שם מודל, מנסים למצוא עמודה לפי alias בכל המודלים
-            # אם יש כמה מודלים עם אותו alias, נחזיר את הראשון (לא מושלם, מומלץ להעביר תמיד שם מודל)
-            for key, col in self.columns_with_aliases.items():
-                if key.endswith(f".{field_name}"):
-                    return col
-            return None
+        
+        return self.short_name_to_column.get(field_name)
 
     def filter(self) -> Select:
         if not self.query_params:
@@ -143,7 +130,8 @@ class MultiTableFeatures:
                 filter_clause = self.operators[operator.upper()](column_to_filter, param_value, wildcard_position)
             else:
                 filter_func = self.operators.get(operator, self.operators["eq"])
-                filter_clause = filter_func(column_to_filter, param_value)
+                converted_value = self.single_table_features._convert_value(column_to_filter, param_value)
+                filter_clause = filter_func(column_to_filter, converted_value)
 
             if filter_clause is not None:
                 self.statement = self.statement.where(filter_clause)
@@ -169,8 +157,9 @@ class MultiTableFeatures:
             if order_by_clauses:
                 self.statement = self.statement.order_by(*order_by_clauses)
         else:
-            # מיון ברירת מחדל לפי created_at יורד
-            default_col = self.columns_with_aliases.get(f"{self.main_model.__name__}.createdAt")
+            default_col = self._get_column("createdAt")  
+            if default_col is None:
+                default_col = self.columns_with_aliases.get(f"{self.main_model.__name__}.createdAt")
             if default_col is not None:
                 self.statement = self.statement.order_by(desc(default_col))
 

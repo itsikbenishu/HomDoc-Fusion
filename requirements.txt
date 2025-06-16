@@ -7,3 +7,4 @@ psycopg[binary]
 sqlmodel
 fastapi[all]
 uvicorn
+python-dateutil

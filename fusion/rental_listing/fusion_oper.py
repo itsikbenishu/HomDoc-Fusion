@@ -10,7 +10,6 @@ from db.session import engine
 from datetime import datetime
 from typing import Dict, Any, List
 
-# Import the DTO classes
 from entities.residence.dtos import ResidenceCreate, ResidenceUpdate, ListingHistoryCreate, ListingContactCreate, ListingContactUpdate
 
 
@@ -148,17 +147,17 @@ class FusionOper(Operation):
                 
                 # Example 3a: Price range filter
                 price_filter_params = {
-                    "Listing.price[$gte]": 1000000,
-                    "Listing.price[$lte]": 3000000,
-                    "Listing.status": "active",
+                    "price[$gte]": 1000000,
+                    "price[$lte]": 3000000,
+                    "status": "active",
                     "limit": 10,
-                    "sort": "-Listing.price"
+                    "sort": "-price"
                 }
 
                 
                 expensive_residences = residence_srv.get(session, price_filter_params)
                 if expensive_residences:
-                    print(f"Found {len(expensive_residences)} expensive active residences")
+                    print(f" Found {len(expensive_residences)} expensive active residences")
                     for residence in expensive_residences[:3]:  # Show first 3
                         print(f"   - {residence.interior_entity_key}: ${residence.listing.price:,.2f}")
                 

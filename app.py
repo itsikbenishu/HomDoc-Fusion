@@ -42,7 +42,7 @@ async def run_fusion():
         run_pipeline("Single Family")
         return ResponseModel(message="HomeDoc retrieved successfully.", data=[{"id": 1, "name": "Itsik"}], status=status.HTTP_200_OK)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve HomeDoc: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve fuse HomeDocs: {e}")
 
 
 app.include_router(api_router_fusion)

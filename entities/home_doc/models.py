@@ -1,7 +1,7 @@
 from typing import Optional, List, Dict
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
-from sqlalchemy import Enum, Column, JSON, func
+from sqlalchemy import Enum, Column, JSON, func, Integer, ForeignKey
 from entities.common.enums import HomeDocCategoriesEnum, HomeDocTypeEnum
 from pydantic import ConfigDict 
 
@@ -53,9 +53,27 @@ class HomeDoc(SQLModel, table=True):
         alias="extraData",
         sa_column=Column(JSON, name="extraData")
     )    
-    listing_agent_id: Optional[int] = Field(default=None, foreign_key="listing_contact.id", ondelete="SET NULL")    
-    listing_office_id: Optional[int] = Field(default=None, foreign_key="listing_contact.id", ondelete="SET NULL")
-    
+
+    listing_agent_id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(
+            "listingAgentId",
+            Integer,
+            ForeignKey("listing_contact.id", ondelete="SET NULL"),
+            nullable=True
+        )
+    )
+
+    listing_office_id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(
+            "listingOfficeId",
+            Integer,
+            ForeignKey("listing_contact.id", ondelete="SET NULL"),
+            nullable=True
+        )
+    )
+
     father: Optional["HomeDoc"] = Relationship(
         back_populates="children",
         sa_relationship_kwargs={"remote_side": "HomeDoc.id"}

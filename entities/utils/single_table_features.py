@@ -2,6 +2,8 @@ from typing import Dict, Any, Optional, Type, Callable, List
 from sqlmodel import select
 from sqlalchemy import desc, asc
 from sqlalchemy.sql.elements import ColumnElement
+from sqlalchemy.sql.sqltypes import Integer, Float, DateTime, Numeric
+from dateutil.parser import parse
 import re
 from entities.utils.filter_operations import FilterOperators
 
@@ -36,6 +38,21 @@ class SingleTableFeatures:
                 self.statement = select(self.model)
         else:
             self.statement = select(self.model)
+
+
+    def _convert_value(self, column, value: str):
+        try:
+            col_type = getattr(column.type, "__class__", None)
+            if col_type in [Integer]:
+                return int(value)
+            if col_type in [Float, Numeric]:
+                return float(value)
+            if col_type in [DateTime]:
+                return parse(value)
+            return value
+        except Exception as e:
+            print(f"Warning: failed to convert '{value}' for column {column} - {e}")
+            return value
 
 
     def filter(self) -> 'SingleTableFeatures':
@@ -73,7 +90,8 @@ class SingleTableFeatures:
                 filter_clause = self.operators[operator.upper()](field, param_value, wildcard_position )
             else:
                 filter_func = self.operators.get(operator, self.operators["eq"])
-                filter_clause = filter_func(field, param_value)
+                converted_value = self._convert_value(field, param_value)
+                filter_clause = filter_func(field, converted_value)
 
             if filter_clause is not None:
                 self.statement = self.statement.where(filter_clause)
