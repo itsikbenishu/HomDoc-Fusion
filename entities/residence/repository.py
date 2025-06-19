@@ -80,12 +80,12 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             self._base_query, 
             all_models, 
             self.primary_model, 
+            self.relationships,
             date_fields=["createdAt", "updatedAt"],
             query_params=query_params
         )
-        statement = features.filter()
-        statement = features.sort() 
-        statement = features.paginate()
+        features.fields_selection().filter().sort().paginate()
+        statement = features.statement
 
         return session.exec(statement).all()
 

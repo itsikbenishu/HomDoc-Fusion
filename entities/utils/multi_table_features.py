@@ -1,9 +1,10 @@
 from typing import List, Type, Dict, Any, Optional
-from sqlalchemy.sql import Select
-from sqlalchemy.inspection import inspect
+from sqlalchemy.sql import Select, ColumnElement
+from sqlalchemy.orm import class_mapper
 from sqlalchemy import desc, asc
 import re
 from entities.utils.single_table_features import SingleTableFeatures
+from entities.abstracts.expanded_entity_repository import RelationshipConfig, RelationshipType
 
 class MultiTableFeatures:
     def __init__(
@@ -11,123 +12,161 @@ class MultiTableFeatures:
         base_statement: Select,
         models: List[Type],
         main_model: Type,
+        relationships: List[RelationshipConfig],
         date_fields: Optional[List[str]] = None,
         query_params: Optional[Dict[str, Any]] = None,
     ):
+        self.base_statement = base_statement
+        self.statement = base_statement
         self.models = models
         self.main_model = main_model
+        self.relationships = relationships
         self.date_fields = date_fields or []
         self.query_params = query_params or {}
+        
         self.single_table_features = SingleTableFeatures(self.main_model, self.query_params)
-
         self.filter_ops = self.single_table_features.filter_ops
         self.operators = self.single_table_features.operators
 
-        self.columns_with_aliases = self._build_columns_with_aliases(base_statement)
-        self.short_name_to_column = self._build_short_name_mapping()
+        self._build_field_maps()
 
-        fields_str = self.query_params.get("fields")
-        if fields_str:
-            field_names = [f.strip() for f in fields_str.split(",")]
-            columns = []
-            for field_name in field_names:
-                column_label = self._get_column(field_name)
-                if column_label is not None:
-                    columns.append(column_label)
-            self.statement = Select(*columns).select_from(base_statement.froms[0]) if columns else base_statement
-        else:
-            self.statement = base_statement
-    def _find_model_for_field(self, field_name: str) -> Optional[Type]:
-        if "." in field_name:
-            model_name, simple_field_name = field_name.split(".", 1)
-            for model in self.models:
-                if model.__name__ == model_name:
-                    return model
-            return None
+    def _build_field_maps(self) -> None:
+        """
+        Creates maps from field names (short and qualified) to their SQLAlchemy Column objects and parent models.
+        Short names are allowed only for the main model and ONE_TO_ONE relationships.
+        MANY_TO_ONE only gets qualified mapping using relationship_field.
+        ONE_TO_MANY is excluded completely.
+        """
+        self.field_to_column_map: Dict[str, ColumnElement] = {}
+        self.field_to_model_map: Dict[str, Type] = {}
+        self.relationship_field_to_model_map: Dict[str, Type] = {}
+        short_name_collisions: set = set()
 
-        for model in self.models:
-            for field_name_in_model, field_info in model.model_fields.items():
-                alias = getattr(field_info, "alias", None) or field_name_in_model
-                if alias == field_name or field_name_in_model == field_name:
-                    return model
-        return None
+        relevant_models = [self.main_model]
+        for rel in self.relationships:
+            if rel.relationship_type in [RelationshipType.ONE_TO_ONE, RelationshipType.MANY_TO_ONE]:
+                relevant_models.append(rel.model)
 
-    def _build_columns_with_aliases(self, statement: Select) -> Dict[str, Any]:
-        columns = {}
-        for model in self.models:
+        for model in relevant_models:
             model_name = model.__name__
+            print(f"==={model_name}===")
+
             try:
-                mapper = inspect(model)
+                mapper = class_mapper(model)
                 for column in mapper.columns:
-                    column_name = column.name
-                    alias = column.key  
-                    key_alias = f"{model_name}.{alias}"
-                    columns[key_alias] = column.label(key_alias)
+                    short_field_name = column.key
+
+                    # qualified name depends on relationship type
+                    if model == self.main_model:
+                        qualified_field_name = f"{model_name}.{short_field_name}"
+
+                    else:
+                        rel = next((r for r in self.relationships if r.model == model), None)
+                        if not rel:
+                            continue
+
+                        if rel.relationship_type == RelationshipType.MANY_TO_ONE:
+                            qualified_field_name = f"{rel.relationship_field}.{short_field_name}"
+                            # map to support MANY_TO_ONE prefix access like listing_agent.name
+                            self.relationship_field_to_model_map[rel.relationship_field] = model
+
+                        elif rel.relationship_type == RelationshipType.ONE_TO_ONE:
+                            qualified_field_name = f"{model_name}.{short_field_name}"
+                        else:
+                            # skip ONE_TO_MANY
+                            continue
+
+                    # always add qualified name
+                    self.field_to_column_map[qualified_field_name] = column
+                    self.field_to_model_map[qualified_field_name] = model
+
+                    # add short names only for main model and ONE_TO_ONE
+                    if model == self.main_model or (rel and rel.relationship_type == RelationshipType.ONE_TO_ONE):
+                        if short_field_name in self.field_to_column_map:
+                            if short_field_name not in short_name_collisions:
+                                print(
+                                    f"Warning: Field name '{short_field_name}' is ambiguous. "
+                                    f"Use qualified name (e.g., {qualified_field_name})."
+                                )
+                                del self.field_to_column_map[short_field_name]
+                                del self.field_to_model_map[short_field_name]
+                                short_name_collisions.add(short_field_name)
+                        else:
+                            self.field_to_column_map[short_field_name] = column
+                            self.field_to_model_map[short_field_name] = model
+
             except Exception as e:
                 print(f"Error inspecting model {model_name}: {e}")
-        return columns
+    
+    def _get_column(self, field_name: str) -> Optional[ColumnElement]:
+        column = self.field_to_column_map.get(field_name)
+        if isinstance(column, ColumnElement):
+            return column
 
-    def _build_short_name_mapping(self) -> Dict[str, Any]:
-        short_mapping = {}
-        for full_name, column in self.columns_with_aliases.items():
-            if "." in full_name:
-                _, field_name = full_name.split(".", 1)
-                if field_name not in short_mapping:
-                    short_mapping[field_name] = column
-                else:
-                    print(f"Warning: field column '{field_name}' is already exist at other model")
+        print(f"Warning: Field '{field_name}' is not a valid SQLAlchemy column.")
+        return None
 
-        return short_mapping
-
-    def build(self) -> Select:
-        return self.statement
-
-    def _get_column(self, field_name: str):        
-        if "." in field_name:
-            print(f"Warning: Full format '{field_name}' is not supported. Use field name only.")
-            return None
+    def _find_model_for_field(self, field_name: str) -> Optional[Type]:
+        """Finds the model for a field name using the pre-built map (O(1) lookup)."""
+        model = self.field_to_model_map.get(field_name)
+        if model is None:
+            print(f"Warning: Could not find a model for field '{field_name}'.")
+        return model
         
-        return self.short_name_to_column.get(field_name)
+    def fields_selection(self) -> "MultiTableFeatures":
+        """
+        Applies field selection based on the 'fields' query parameter.
+        This modifies the existing statement's columns instead of replacing it,
+        preserving JOINs and other essential clauses.
+        """
+        fields_str = self.query_params.get("fields")
+        if not fields_str:
+            return self
 
-    def filter(self) -> Select:
-        if not self.query_params:
-            return self.statement
+        selected_columns = []
+        field_names = [f.strip() for f in fields_str.split(",")]
+        
+        for field_name in field_names:
+            column = self._get_column(field_name)
+            if column is not None:
+                selected_columns.append(column.label(field_name.replace('.', '_')))
 
-        excluded_fields = {"page", "sort", "limit", "fields", "tz"}
+        if selected_columns:
+            self.statement = self.statement.with_only_columns(*selected_columns)
+        
+        return self
 
-        query_params = {
-            param_name: param_value
-            for param_name, param_value in self.query_params.items()
-            if param_name not in excluded_fields
+    def filter(self) -> "MultiTableFeatures":
+        excluded_params = {"page", "sort", "limit", "fields", "tz"}
+        
+        query_params_to_filter = {
+            k: v for k, v in self.query_params.items() if k not in excluded_params
         }
 
-        for param_name, param_value in query_params.items():
+        for param_name, param_value in query_params_to_filter.items():
             match = re.match(r'^(.*?)(?:\[\$([a-zA-Z0-9_]+)\])?$', param_name)
             if not match:
                 continue
-            field_name = match.group(1)
-            operator = match.group(2) if match.group(2) else "eq"
+            
+            field_name, operator = match.groups()
+            operator = operator or "eq"
 
             if operator in ["date", "wildcard"]:
                 continue
 
-            target_model = self._find_model_for_field(field_name)
-            if not target_model:
-                continue
-
             column_to_filter = self._get_column(field_name)
             if column_to_filter is None:
-                print(f"Warning: Could not find column for filtering field '{field_name}'")
                 continue
-
+            
             is_date = field_name in self.date_fields
-            wildcard_position = query_params.get(f"{field_name}[$wildcard]", "both")
-
+            
             filter_clause = None
+            
             if is_date:
                 filter_clause = self.filter_ops.handle_date_filter(column_to_filter, str(param_value), operator)
             elif operator.upper() in ["LIKE", "ILIKE", "NOT_LIKE", "NOT_ILIKE"]:
-                filter_clause = self.operators[operator.upper()](column_to_filter, param_value, wildcard_position)
+                wildcard_pos = self.query_params.get(f"{field_name}[$wildcard]", "both")
+                filter_clause = self.operators[operator.upper()](column_to_filter, param_value, wildcard_pos)
             else:
                 filter_func = self.operators.get(operator, self.operators["eq"])
                 converted_value = self.single_table_features._convert_value(column_to_filter, param_value)
@@ -136,36 +175,36 @@ class MultiTableFeatures:
             if filter_clause is not None:
                 self.statement = self.statement.where(filter_clause)
 
-        return self.statement
+        return self
 
-    def sort(self) -> Select:
-        
-        if "sort" in self.query_params:
-            sort_fields = self.query_params["sort"].split(",")
-            order_by_clauses = []
+    def sort(self) -> "MultiTableFeatures":
+        sort_param = self.query_params.get("sort")
+        order_by_clauses = []
 
-            for sort_field in sort_fields:
-                is_desc = sort_field.startswith("-")
-                field_name = sort_field[1:] if is_desc else sort_field
-
+        if sort_param:
+            sort_fields = sort_param.split(",")
+            for field in sort_fields:
+                is_desc = field.startswith("-")
+                field_name = field[1:] if is_desc else field
+                
                 column = self._get_column(field_name)
                 if column is not None:
                     order_by_clauses.append(desc(column) if is_desc else asc(column))
-                else:
-                    print(f"Warning: Could not find sort column for field '{field_name}'")
-
-            if order_by_clauses:
-                self.statement = self.statement.order_by(*order_by_clauses)
         else:
-            default_col = self._get_column("createdAt")  
-            if default_col is None:
-                default_col = self.columns_with_aliases.get(f"{self.main_model.__name__}.createdAt")
-            if default_col is not None:
-                self.statement = self.statement.order_by(desc(default_col))
+            default_sort_field = f"{self.main_model.__name__}.createdAt"
+            column = self._get_column(default_sort_field)
+            if column is not None:
+                order_by_clauses.append(desc(column))
+        
+        if order_by_clauses:
+            self.statement = self.statement.order_by(*order_by_clauses)
+        
+        return self
 
-        return self.statement
-
-    def paginate(self) -> Select:
-        paginated = self.single_table_features.paginate()
-        self.statement = self.statement.limit(paginated._limit_clause).offset(paginated._offset_clause)
-        return self.statement
+    def paginate(self) -> "MultiTableFeatures":
+        """Applies LIMIT and OFFSET for pagination."""
+        # This reuses the logic from SingleTableFeatures but applies it to the current statement
+        paginated_statement = self.single_table_features.paginate()
+        self.statement = self.statement.limit(paginated_statement._limit_clause).offset(paginated_statement._offset_clause)
+        return self
+    

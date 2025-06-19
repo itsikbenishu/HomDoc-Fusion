@@ -84,7 +84,6 @@ class ListingContact(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[HomeDoc.listing_office_id]"}
     )
 
-
     model_config = ConfigDict(
         validate_by_name=True,
         validate_by_alias=True

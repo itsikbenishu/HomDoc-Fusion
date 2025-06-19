@@ -1,28 +1,30 @@
 from datetime import datetime
 from typing import Optional, List, Dict
-from pydantic import Field, ConfigDict, field_validator
-from sqlmodel import SQLModel, Column, Enum
+from pydantic import Field, field_validator
+from entities.abstracts.camel_model import CamelModel
 from entities.home_doc.models import HomeDoc, HomeDocDimensions
 from entities.residence.models import ListingContact, ListingHistory, ResidenceSpecsAttributes, Listing
 from entities.common.enums import HomeDocTypeEnum, ListingTypeEnum, ListingStatusEnum, HomeDocCategoriesEnum
 
-class ListingContactResponse(SQLModel):
+class ListingContactResponse(CamelModel):
     id: int
     name: str
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
 
-class ListingHistoryResponse(SQLModel):
+
+class ListingHistoryResponse(CamelModel):
     id: int
     event: Optional[str] = None
     price: Optional[float] = None
-    listing_type: Optional[ListingTypeEnum] = Field(default=None, alias="listingType")
-    listed_date: Optional[datetime] = Field(default=None, alias="listedDate")
-    removed_date: Optional[datetime] = Field(default=None, alias="removedDate")
-    days_on_market: Optional[int] = Field(default=None, alias="daysOnMarket")
+    listing_type: Optional[ListingTypeEnum] = None
+    listed_date: Optional[datetime] = None
+    removed_date: Optional[datetime] = None
+    days_on_market: Optional[int] = None
 
-class ListingResponse(SQLModel):
+
+class ListingResponse(CamelModel):
     id: int
     price: Optional[float] = None
     hoa_fee: Optional[float] = None
@@ -30,12 +32,14 @@ class ListingResponse(SQLModel):
     bathrooms: Optional[float] = None
     status: ListingStatusEnum
 
-class HomeDocChildResponse(SQLModel):
+
+class HomeDocChildResponse(CamelModel):
     id: int
     interior_entity_key: str
     type: str
 
-class ResidenceResponse(SQLModel):
+
+class ResidenceResponse(CamelModel):
     id: int
     father_id: Optional[int] = None
     external_id: Optional[str] = None
@@ -56,10 +60,8 @@ class ResidenceResponse(SQLModel):
     width: Optional[int] = None
 
     listing: Optional[ListingResponse] = None
-    
     listing_agent: Optional[ListingContactResponse] = None
     listing_office: Optional[ListingContactResponse] = None
-    
     listing_history: List[ListingHistoryResponse] = Field(default_factory=list)
 
     children: List[HomeDocChildResponse] = Field(default_factory=list)
@@ -75,16 +77,15 @@ class ResidenceResponse(SQLModel):
         listing_office: Optional[ListingContact] = None,
         listing_history: Optional[List[ListingHistory]] = None
     ) -> "ResidenceResponse":
-        
+
         children_responses = []
         if home_doc.children:
             for child in home_doc.children:
-                child_response = HomeDocChildResponse(
+                children_responses.append(HomeDocChildResponse(
                     id=child.id,
                     interior_entity_key=child.interior_entity_key,
                     type=child.type,
-                )
-                children_responses.append(child_response)
+                ))
 
         listing_response = None
         if listing:
@@ -120,7 +121,7 @@ class ResidenceResponse(SQLModel):
         history_responses = []
         if listing_history:
             for history_item in listing_history:
-                history_response = ListingHistoryResponse(
+                history_responses.append(ListingHistoryResponse(
                     id=history_item.id,
                     event=history_item.event,
                     price=history_item.price,
@@ -128,8 +129,7 @@ class ResidenceResponse(SQLModel):
                     listed_date=history_item.listed_date,
                     removed_date=history_item.removed_date,
                     days_on_market=history_item.days_on_market
-                )
-                history_responses.append(history_response)
+                ))
 
         return cls(
             id=home_doc.id,
@@ -156,27 +156,23 @@ class ResidenceResponse(SQLModel):
         )
 
 
-class ListingContactCreate(SQLModel):
+class ListingContactCreate(CamelModel):
     name: str
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
 
-class ListingHistoryCreate(SQLModel):
+
+class ListingHistoryCreate(CamelModel):
     event: Optional[str] = None
     price: Optional[float] = None
-    listing_type: Optional[ListingTypeEnum] = Field(default=None, alias="listingType")
-    listed_date: Optional[datetime] = Field(default=None, alias="listedDate")
-    removed_date: Optional[datetime] = Field(default=None, alias="removedDate")
-    days_on_market: Optional[int] = Field(default=None, alias="daysOnMarket")
-    
-    model_config = ConfigDict(
-        str_strip_whitespace=True,
-        use_enum_values=True,
-        populate_by_name=True
-    )
+    listing_type: Optional[ListingTypeEnum] = None
+    listed_date: Optional[datetime] = None
+    removed_date: Optional[datetime] = None
+    days_on_market: Optional[int] = None
 
-class ResidenceCreate(SQLModel):
+
+class ResidenceCreate(CamelModel):
     external_id: Optional[str] = None
     interior_entity_key: str
     category: HomeDocCategoriesEnum
@@ -196,10 +192,10 @@ class ResidenceCreate(SQLModel):
     bedrooms: Optional[float] = None
     bathrooms: Optional[float] = None
     status: ListingStatusEnum
-    
+
     listing_agent: Optional[ListingContactCreate] = None
     listing_office: Optional[ListingContactCreate] = None
-    
+
     listing_history: List[ListingHistoryCreate] = Field(default_factory=list)
 
     @field_validator('interior_entity_key')
@@ -208,54 +204,40 @@ class ResidenceCreate(SQLModel):
         if not v or not v.strip():
             raise ValueError('interior_entity_key cannot be empty')
         return v.strip()
+
     @field_validator('type')
     @classmethod
     def validate_type(cls, v):
-        if not v or not v.strip(): 
+        if not v or not v.strip():
             raise ValueError('type cannot be empty')
-        if v not in [HomeDocTypeEnum.PROPERTY,
-                       HomeDocTypeEnum.FLOOR,
-                       HomeDocTypeEnum.APARTMENT, 
-                       HomeDocTypeEnum.ROOM]:
-            raise ValueError('type of residence must be one of the following: PROPERTY, FLOOR, APARTMENT, ROOM')
+        if v not in [
+            HomeDocTypeEnum.PROPERTY,
+            HomeDocTypeEnum.FLOOR,
+            HomeDocTypeEnum.APARTMENT,
+            HomeDocTypeEnum.ROOM
+        ]:
+            raise ValueError('type of residence must be one of: PROPERTY, FLOOR, APARTMENT, ROOM')
         return v
 
-    model_config = ConfigDict(
-        str_strip_whitespace=True,
-        use_enum_values=True,
-        populate_by_name=True
-    )
 
-class ListingContactUpdate(SQLModel):
+class ListingContactUpdate(CamelModel):
     id: int
     name: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
 
-    model_config = ConfigDict(
-        str_strip_whitespace=True,
-        use_enum_values=True,
-        populate_by_name=True
-    )
 
-
-class ListingHistoryUpdate(SQLModel):
+class ListingHistoryUpdate(CamelModel):
     event: Optional[str] = None
     price: Optional[float] = None
-    listing_type: Optional[ListingTypeEnum] = Field(default=None, alias="listingType")
-    listed_date: Optional[datetime] = Field(default=None, alias="listedDate")
-    removed_date: Optional[datetime] = Field(default=None, alias="removedDate")
-    days_on_market: Optional[int] = Field(default=None, alias="daysOnMarket")
+    listing_type: Optional[ListingTypeEnum] = None
+    listed_date: Optional[datetime] = None
+    removed_date: Optional[datetime] = None
+    days_on_market: Optional[int] = None
 
-    
-    model_config = ConfigDict(
-        str_strip_whitespace=True,
-        use_enum_values=True,
-        populate_by_name=True
-    )
 
-class ResidenceUpdate(SQLModel):
+class ResidenceUpdate(CamelModel):
     external_id: Optional[str] = None
     description: Optional[str] = None
     extra_data: Optional[List[Dict[str, str]]] = Field(default_factory=list)
@@ -275,7 +257,7 @@ class ResidenceUpdate(SQLModel):
 
     listing_agent: Optional[ListingContactUpdate] = None
     listing_office: Optional[ListingContactUpdate] = None
-    
+
     listing_history: List[ListingHistoryUpdate] = Field(default_factory=list)
 
     @field_validator('status')
@@ -284,11 +266,3 @@ class ResidenceUpdate(SQLModel):
         if not v:
             raise ValueError('status cannot be empty')
         return v
-    
-
-    model_config = ConfigDict(
-        str_strip_whitespace=True,
-        use_enum_values=True,
-        populate_by_name=True
-    )
-

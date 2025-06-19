@@ -52,39 +52,31 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
             model_cls = rel_config.model
             model_key = model_cls.__name__
 
-            # יצירת מפתח ייחודי עבור alias
             alias_key = f"{model_key}_{field_name}"
             
             alias_instance = None
             if model_usage_count[model_key] > 1:
                 if alias_key not in alias_map:
-                    # יצירת alias עם שם ייחודי מפורש
                     alias_instance = aliased(model_cls, name=alias_key)
                     alias_map[alias_key] = alias_instance
                 else:
                     alias_instance = alias_map[alias_key]
 
-            # בדיקת קיום השדה
             try:
                 field = getattr(self.primary_model, field_name)
             except AttributeError:
                 raise Exception(f"Field '{field_name}' does not exist on {self.primary_model.__name__}")
 
-            # החלטה: JOIN לפילטרים או loading strategy (לא שניהם עם aliases!)
             if rel_config.join_for_filter_or_sort and alias_instance:
-                # עם aliases - נעדיף JOIN לפילטרים על פני loading
                 query = query.join(field.of_type(alias_instance), isouter=True)
             elif rel_config.join_for_filter_or_sort and not alias_instance:
-                # בלי aliases - אפשר גם JOIN וגם loading
                 query = query.join(field, isouter=True)
                 
-                # הוסף loading strategy
                 if rel_config.load_strategy == LoadStrategy.JOINED:
                     query = query.options(joinedload(field))
                 elif rel_config.load_strategy == LoadStrategy.SELECT_IN:
                     query = query.options(selectinload(field))
             else:
-                # רק loading strategy (בלי JOIN לפילטרים)
                 if rel_config.load_strategy == LoadStrategy.JOINED:
                     if alias_instance:
                         query = query.options(joinedload(field.of_type(alias_instance)))
