@@ -48,13 +48,13 @@ api_router_fusion = APIRouter(
 async def home(request: Request):
     return templates.TemplateResponse("welcome.html", {"request": request})
 
-@api_router_fusion.get("/api/fuse", response_model=ResponseModel[list[dict[str, Any]]], tags=["HomeDocsFusion"])
-async def run_fusion():
-    try:
-        run_pipeline("Single Family")
-        return ResponseModel(message="HomeDoc retrieved successfully.", data=[{"id": 1, "name": "Itsik"}], status=status.HTTP_200_OK)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve fuse HomeDocs: {e}")
+# @api_router_fusion.get("/api/fuse", response_model=ResponseModel[list[dict[str, Any]]], tags=["HomeDocsFusion"])
+# async def run_fusion():
+#     try:
+#         run_pipeline("Single Family")
+#         return ResponseModel(message="HomeDoc retrieved successfully.", data=[{"id": 1, "name": "Itsik"}], status=status.HTTP_200_OK)
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Failed to retrieve fuse HomeDocs: {e}")
 
 
 app.include_router(api_router_fusion)
