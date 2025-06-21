@@ -52,7 +52,7 @@ class Listing(SQLModel, table=True):
     )
     bedrooms: Optional[float] = Field(default=None)
     bathrooms: Optional[float] = Field(default=None)
-    status: ListingStatusEnum = Field(
+    listing_status: ListingStatusEnum = Field(
         default=ListingStatusEnum.inactive,
         sa_column=Enum(ListingStatusEnum, name='listing_status_enum'),
         alias="listingStatus"

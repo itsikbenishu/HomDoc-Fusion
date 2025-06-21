@@ -30,7 +30,7 @@ class ListingResponse(CamelModel):
     hoa_fee: Optional[float] = None
     bedrooms: Optional[float] = None
     bathrooms: Optional[float] = None
-    status: ListingStatusEnum
+    listing_status: ListingStatusEnum
 
 
 class HomeDocChildResponse(CamelModel):
@@ -95,7 +95,7 @@ class ResidenceResponse(CamelModel):
                 hoa_fee=listing.hoa_fee,
                 bedrooms=listing.bedrooms,
                 bathrooms=listing.bathrooms,
-                status=listing.status
+                listing_status=listing.listing_status
             )
 
         agent_response = None
@@ -191,7 +191,7 @@ class ResidenceCreate(CamelModel):
     hoa_fee: Optional[float] = None
     bedrooms: Optional[float] = None
     bathrooms: Optional[float] = None
-    status: ListingStatusEnum
+    listing_status: ListingStatusEnum
 
     listing_agent: Optional[ListingContactCreate] = None
     listing_office: Optional[ListingContactCreate] = None
@@ -253,16 +253,16 @@ class ResidenceUpdate(CamelModel):
     hoa_fee: Optional[float] = None
     bedrooms: Optional[float] = None
     bathrooms: Optional[float] = None
-    status: ListingStatusEnum
+    listing_status: ListingStatusEnum
 
     listing_agent: Optional[ListingContactUpdate] = None
     listing_office: Optional[ListingContactUpdate] = None
 
     listing_history: List[ListingHistoryUpdate] = Field(default_factory=list)
 
-    @field_validator('status')
+    @field_validator('listing_status')
     @classmethod
     def validate_status(cls, v):
         if not v:
-            raise ValueError('status cannot be empty')
+            raise ValueError('listing status cannot be empty')
         return v

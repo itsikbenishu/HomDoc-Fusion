@@ -87,6 +87,8 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         features.fields_selection().filter().sort().paginate()
         statement = features.statement
 
+        print("SQL Query:", str(statement.compile(compile_kwargs={"literal_binds": True})))
+
         return session.exec(statement).all()
 
     def create(self, data: Dict[str, Any], session: Session) -> HomeDoc:
