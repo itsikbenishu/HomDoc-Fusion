@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Query, Request, Depends, HTTPException, status
+from fastapi import APIRouter, Query, Body, Request, Depends, HTTPException, status 
 from sqlmodel import Session
 from typing import Optional, List
 from db.session import get_session
 from entities.home_doc.repository import HomeDocRepository
 from entities.home_doc.service import HomeDocService
 from entities.home_doc.models import HomeDoc, HomeDocTypeEnum
+from entities.home_doc.dtos import HomeDocCreate, HomeDocUpdate
+from entities.home_doc.examples import home_doc_create_example, home_doc_update_example
 from entities.abstracts.response_model import ResponseModel
 
 api_router = APIRouter(tags=["HomeDocs"])
@@ -115,7 +117,7 @@ async def get_home_doc(
 
 @api_router.post("/api/home_docs", response_model=ResponseModel[HomeDoc], status_code=status.HTTP_201_CREATED)
 async def create_home_doc(
-    home_doc: HomeDoc,
+    home_doc: HomeDocCreate = Body(..., example=home_doc_create_example),
     session: Session = Depends(get_session)
 ):
     try:
@@ -129,7 +131,7 @@ async def create_home_doc(
 @api_router.put("/api/home_docs/{home_doc_id}", response_model=ResponseModel[HomeDoc])
 async def update_home_doc(
     home_doc_id: int,
-    home_doc: HomeDoc,
+    home_doc: HomeDocUpdate = Body(..., example=home_doc_update_example),
     session: Session = Depends(get_session)
 ):
     try:
