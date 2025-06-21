@@ -6,6 +6,8 @@ class CamelModel(SQLModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
         populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         use_enum_values=True,
         str_strip_whitespace=True
     )

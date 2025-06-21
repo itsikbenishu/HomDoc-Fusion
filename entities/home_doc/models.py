@@ -107,11 +107,6 @@ class HomeDoc(CamelModel, table=True):
         sa_relationship_kwargs={"uselist": False}
     )
 
-    model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True
-    )
-
 
 class HomeDocRelations(SQLModel, table=True):
     __tablename__ = "home_docs_relations"
