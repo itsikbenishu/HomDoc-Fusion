@@ -14,7 +14,7 @@ class SingleEntityRepository(Repository, Generic[ModelType]):
         pass
 
     @abstractmethod
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[ModelType]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[ModelType] | List[Dict[str, Any]]:
         pass
 
     @abstractmethod

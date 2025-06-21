@@ -51,7 +51,6 @@ async def get_oldest_properties(
 @api_router.get(
     "/api/home_docs/",
     summary="Retrieve a list of HomeDocs with advanced filtering, sorting, and pagination",
-    response_model=ResponseModel[List[HomeDoc]],
     description="""
 Fetch a list of HomeDocs from the database with support for:
 
@@ -73,7 +72,7 @@ Fetch a list of HomeDocs from the database with support for:
 - `[$wildcard]=start|end|both`: Wildcard matching position for LIKE/ILIKE filters
 
 **Example request:**
-/api/home_docs?page=2&limit=25&sort=-createdAt&createdAt[$gte]=2024-01-01&fields=id,name,description
+/api/home_docs?page=2&limit=25&sort=-createdAt&createdAt[$gte]=2024-01-01&fields=id,createAt,description
 """
 )
 async def get_home_docs(

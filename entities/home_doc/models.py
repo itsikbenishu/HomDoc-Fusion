@@ -1,11 +1,13 @@
 from typing import Optional, List, Dict
 from sqlmodel import SQLModel, Field, Relationship
-from datetime import datetime
 from sqlalchemy import Enum, Column, JSON, func, Integer, ForeignKey
+from pydantic import ConfigDict
+from datetime import datetime
 from entities.common.enums import HomeDocCategoriesEnum, HomeDocTypeEnum
-from pydantic import ConfigDict 
+from entities.abstracts.camel_model import CamelModel
+ 
 
-class HomeDoc(SQLModel, table=True):
+class HomeDoc(CamelModel, table=True):
     __tablename__ = "home_docs"
 
     id: int = Field(default=None, primary_key=True)

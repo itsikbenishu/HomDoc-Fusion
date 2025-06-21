@@ -26,16 +26,24 @@ class SingleTableFeatures:
         self.operators = self.filter_ops.operators
 
         fields_str = self.query_params.get("fields")
+        self.selected_columns = []
+
         if fields_str:
-            field_names = [f.strip() for f in fields_str.split(",")]
-            columns = []
-            for field_name in field_names:
-                if hasattr(self.model, field_name):
-                    columns.append(getattr(self.model, field_name))
-            if columns:
-                self.statement = select(*columns)
-            else:
-                self.statement = select(self.model)
+            field_names = [field.strip() for field in fields_str.split(",")]
+
+            alias_to_attr = {
+                field_info.alias or name: name
+                for name, field_info in self.model.model_fields.items()
+            }
+
+            for alias in field_names:
+                attr_name = alias_to_attr.get(alias)
+                if attr_name and hasattr(self.model, attr_name):
+                    col = getattr(self.model, attr_name)
+                    self.selected_columns.append(col.label(alias))
+
+        if self.selected_columns:
+            self.statement = select(*self.selected_columns)
         else:
             self.statement = select(self.model)
 
@@ -123,3 +131,4 @@ class SingleTableFeatures:
         self.statement = self.statement.offset(offset).limit(self.limit)
 
         return self.statement 
+    

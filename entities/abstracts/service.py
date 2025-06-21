@@ -20,7 +20,7 @@ class Service(Generic[ResponseType, RepoType, CreateDTO, UpdateDTO], ABC):
         pass
 
     @abstractmethod
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[ResponseType]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[ResponseType] | List[Dict[str, Any]]:
         pass
 
     @abstractmethod

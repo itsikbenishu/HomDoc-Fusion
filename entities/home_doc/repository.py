@@ -16,12 +16,23 @@ class HomeDocRepository(SingleEntityRepository[HomeDoc]):
         home_doc = results.first()
         return home_doc
     
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc]:
-        features = SingleTableFeatures(HomeDoc,["createdAt", "updatedAt"], query_params)
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc] | List[Dict[str, Any]]:
+        features = SingleTableFeatures(HomeDoc, ["createdAt", "updatedAt"], query_params)
         statement = features.filter().sort().paginate()
-        results = session.exec(statement)
-        result_list = list(results)
-        
+
+        if features.selected_columns:
+            results = session.exec(statement).all()
+            print(results)
+            not_has_tuples_result = len(features.selected_columns) == 1
+            if not_has_tuples_result:
+                alias = features.selected_columns[0]._label 
+                result_list = [{alias: r} for r in results]
+            else:
+                aliases = [col._label for col in features.selected_columns]
+                result_list = [dict(zip(aliases, row)) for row in results]
+        else:
+            result_list = session.exec(statement).all()
+
         return result_list
 
     def create(self, data: HomeDoc, session: Session) -> HomeDoc:

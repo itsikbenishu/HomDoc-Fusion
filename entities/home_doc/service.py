@@ -15,7 +15,7 @@ class HomeDocService(Service[HomeDoc, HomeDocRepository, HomeDocCreate, HomeDocU
     def get_by_id(self, item_id: int, session: Session) -> HomeDoc:
         return self.repo.get_by_id(item_id, session)
 
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc] | List[Dict[str, Any]]:
         return self.repo.get(session, query_params)
 
     def create(self, data: HomeDocCreate, session: Session) -> HomeDoc:
