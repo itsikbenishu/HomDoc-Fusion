@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Query, Request, Depends, status, HTTPException
+from fastapi import APIRouter, Query, Body, Request, Depends, status, HTTPException
 from sqlmodel import Session
 from typing import Optional, List
 from db.session import get_session
+from entities.abstracts.response_model import ResponseModel
 from entities.residence.repository import ResidenceRepository
 from entities.residence.service import ResidenceService
 from entities.residence.dtos import ResidenceCreate, ResidenceUpdate, ResidenceResponse
-from entities.abstracts.response_model import ResponseModel
+from entities.residence.examples import residence_update_example, residence_create_example
 
 api_router = APIRouter(
     tags=["Residence"]
@@ -81,7 +82,7 @@ async def get_residence(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_residence(
-    residence: ResidenceCreate,
+    residence: ResidenceCreate = Body(..., example=residence_create_example),
     session: Session = Depends(get_session)
 ):
     try:
@@ -122,7 +123,7 @@ async def get_residence_by_id(
 )
 async def update_residence(
     residence_id: int,
-    residence: ResidenceUpdate,
+    residence: ResidenceUpdate = Body(..., example=residence_update_example),
     session: Session = Depends(get_session)
 ):
     try:

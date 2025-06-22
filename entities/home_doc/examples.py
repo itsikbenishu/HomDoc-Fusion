@@ -5,9 +5,12 @@ home_doc_create_example = {
                             "description": "A cozy one-story house",
                             "extraData": [
                                 {
-                                    "heatingSystem": "Central Heating",
-                                    "parkingSpaces": "2",
-                                    "hasSwimmingPool": "Yes"
+                                    "characteristic": "parking Spaces",
+                                    "value": "2"
+                                },
+                                {
+                                    "characteristic": "has Swimming Pool",
+                                    "value": "Yes"
                                 }
                             ]
                         }
@@ -16,11 +19,18 @@ home_doc_update_example = {
                             "description": "",
                             "extraData": [
                                 {
-                                    "heatingSystem": "Electric heating",
-                                    "parkingSpaces": "3",
-                                    "hasSwimmingPool": "No"
+                                    "characteristic": "heating System",
+                                    "value": "Central Heating"
+                                },
+                                {
+                                    "characteristic": "parking Spaces",
+                                    "value": "4"
+                                },
+                                {
+                                    "characteristic": "has Swimming Pool",
+                                    "value": "Yes"
                                 }
-                            ]
+                            ]                            
                         }
 
 

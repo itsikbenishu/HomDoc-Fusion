@@ -2,12 +2,12 @@ from fastapi import APIRouter, Query, Body, Request, Depends, HTTPException, sta
 from sqlmodel import Session
 from typing import Optional, List
 from db.session import get_session
+from entities.abstracts.response_model import ResponseModel
 from entities.home_doc.repository import HomeDocRepository
 from entities.home_doc.service import HomeDocService
 from entities.home_doc.models import HomeDoc, HomeDocTypeEnum
 from entities.home_doc.dtos import HomeDocCreate, HomeDocUpdate
 from entities.home_doc.examples import home_doc_create_example, home_doc_update_example
-from entities.abstracts.response_model import ResponseModel
 
 api_router = APIRouter(tags=["HomeDocs"])
 
@@ -121,7 +121,7 @@ async def create_home_doc(
     session: Session = Depends(get_session)
 ):
     try:
-        data = get_home_doc_srv().create(home_doc.model_dump(), session)
+        data = get_home_doc_srv().create(home_doc, session)
         return ResponseModel(message="HomeDoc created successfully.", data=data, status=status.HTTP_201_CREATED)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
@@ -135,7 +135,7 @@ async def update_home_doc(
     session: Session = Depends(get_session)
 ):
     try:
-        data = get_home_doc_srv().update(home_doc_id, home_doc.model_dump(), session)
+        data = get_home_doc_srv().update(home_doc_id, home_doc, session)
         return ResponseModel(message="HomeDoc updated successfully.", data=data, status=status.HTTP_200_OK)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))

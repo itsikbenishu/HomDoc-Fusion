@@ -28,9 +28,6 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
         query_params["type[$in]"] = self.types
         
         results = self.repo.get(session, query_params)
-        print("---------------------------")
-        print(results)
-        print("---------------------------")
 
         if not results:
             return None

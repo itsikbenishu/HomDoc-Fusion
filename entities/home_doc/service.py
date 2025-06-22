@@ -20,8 +20,8 @@ class HomeDocService(Service[HomeDoc, HomeDocRepository, HomeDocCreate, HomeDocU
 
     def create(self, data: HomeDocCreate, session: Session) -> HomeDoc:
         try:
-            self._validate_entity(data)
             home_doc_dict = data.model_dump(exclude_unset=True)
+            self._validate_entity(home_doc_dict)
             home_doc = HomeDoc(**home_doc_dict)
             return self.repo.create(home_doc, session)
         except Exception as e:
@@ -30,12 +30,12 @@ class HomeDocService(Service[HomeDoc, HomeDocRepository, HomeDocCreate, HomeDocU
 
     def update(self, item_id: int, data: HomeDocUpdate, session: Session) -> HomeDoc:
         try:
+            home_doc_dict = data.model_dump(exclude_unset=True)
             self._validate_entity(data)
             home_doc = self.repo.get_by_id(item_id, session)
             if not home_doc:
                 raise ValueError(f"HomeDoc with id {item_id} not found")
             
-            home_doc_dict = data.model_dump(exclude_unset=True)
             for field_name, value in home_doc_dict.items():
                 if hasattr(home_doc, field_name):
                     setattr(home_doc, field_name, value)
