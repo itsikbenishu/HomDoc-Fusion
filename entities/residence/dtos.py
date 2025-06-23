@@ -56,8 +56,8 @@ class ResidenceResponse(CamelModel):
     sub_entities_quantity: Optional[int] = None
     construction_year: Optional[int] = None
 
-    length: Optional[int] = None
-    width: Optional[int] = None
+    length: Optional[float] = None
+    width: Optional[float] = None
 
     listing: Optional[ListingResponse] = None
     listing_agent: Optional[ListingContactResponse] = None

@@ -151,8 +151,8 @@ class HomeDocDimensions(SQLModel, table=True):
         sa_column_kwargs={"name": "homeDocId"}
     )
     
-    length: Optional[int] = Field(default=None)
-    width: Optional[int] = Field(default=None)
+    length: Optional[float] = Field(default=None)
+    width: Optional[float] = Field(default=None)
 
     home_doc: Optional["HomeDoc"] = Relationship(back_populates="dimensions")
 

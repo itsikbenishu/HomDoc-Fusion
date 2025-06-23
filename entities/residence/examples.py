@@ -52,7 +52,7 @@ residence_create_example = {
         {
             "event": "listed",
             "price": 479000,
-            "listingType": "Exclusive",
+            "listingType": "Standard",
             "listedDate": "2025-05-01",
             "removedDate": None,
             "daysOnMarket": 51
@@ -60,8 +60,8 @@ residence_create_example = {
         {
             "event": "priceReduced",
             "price": 465000,
-            "listingType": "Exclusive",
-            "listedDate": "2025-06-10Z",
+            "listingType": "Standard",
+            "listedDate": "2025-06-10",
             "removedDate": None,
             "daysOnMarket": 12
         }
@@ -122,7 +122,7 @@ residence_update_example = {
         {
             "event": "listed",
             "price": 479000,
-            "listingType": "Exclusive",
+            "listingType": "Standard",
             "listedDate": "2025-05-01",
             "removedDate": None,
             "daysOnMarket": 51
@@ -130,7 +130,7 @@ residence_update_example = {
         {
             "event": "priceReduced",
             "price": 465000,
-            "listingType": "Exclusive",
+            "listingType": "Standard",
             "listedDate": "2025-06-10",
             "removedDate": None,
             "daysOnMarket": 12
