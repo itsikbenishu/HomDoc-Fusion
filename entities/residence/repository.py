@@ -69,12 +69,12 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         super().__init__(HomeDoc, relationships)
 
     def get_by_id(self, item_id: int, session: Session) -> HomeDoc:
-        residence_filter =HomeDoc.type.in_(self.types)
+        residence_filter = HomeDoc.type.in_(self.types)
         statement = self._base_query.where(self.primary_model.id == item_id, residence_filter)
         result = session.exec(statement).one_or_none()
         return result
 
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc] | List[Dict[str, Any]]:
         all_models = [self.primary_model] + self.get_related_models()
         features = MultiTableFeatures(
             self._base_query, 
@@ -87,9 +87,17 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         features.fields_selection().filter().sort().paginate()
         statement = features.statement
 
-        print("SQL Query:", str(statement.compile(compile_kwargs={"literal_binds": True})))
+        if "fields" not in query_params:
+            return session.exec(statement).all()
+        else:
+            results = session.exec(statement).all()
+            print(results)
+            column_names = [field.strip() for field in query_params.get("fields").split(",")]
 
-        return session.exec(statement).all()
+            return [
+                dict(zip(column_names, row))
+                for row in results
+            ]
 
     def create(self, data: Dict[str, Any], session: Session) -> HomeDoc:
         agent = None

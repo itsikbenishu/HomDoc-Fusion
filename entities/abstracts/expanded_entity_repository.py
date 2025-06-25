@@ -95,7 +95,7 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
         pass
 
     @abstractmethod
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[PrimaryModelType]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[PrimaryModelType]| List[Dict[str, Any]]:
         pass
 
     @abstractmethod

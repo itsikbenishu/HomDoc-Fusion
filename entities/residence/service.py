@@ -22,16 +22,21 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
             return None
         return self._to_response(home_doc)
 
-    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> Optional[List[ResidenceResponse]]:
+    def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[ResidenceResponse] | List[Dict[str, Any]]:
         if query_params is None:
             query_params = {}
         query_params["type[$in]"] = self.types
         
         results = self.repo.get(session, query_params)
-
+        print("results:")
+        print(results)
         if not results:
             return None
-        return [self._to_response(home_doc) for home_doc in results]
+        
+        if "fields" not in query_params:
+            return [self._to_response(home_doc) for home_doc in results]
+        else:
+            return results 
 
     def create(self, data: ResidenceCreate, session: Session) -> ResidenceResponse:
         try:

@@ -24,15 +24,6 @@ class ListingHistoryResponse(CamelModel):
     days_on_market: Optional[int] = None
 
 
-class ListingResponse(CamelModel):
-    id: int
-    price: Optional[float] = None
-    hoa_fee: Optional[float] = None
-    bedrooms: Optional[float] = None
-    bathrooms: Optional[float] = None
-    listing_status: ListingStatusEnum
-
-
 class HomeDocChildResponse(CamelModel):
     id: int
     interior_entity_key: str
@@ -59,7 +50,12 @@ class ResidenceResponse(CamelModel):
     length: Optional[float] = None
     width: Optional[float] = None
 
-    listing: Optional[ListingResponse] = None
+    price: Optional[float] = None
+    hoa_fee: Optional[float] = None
+    bedrooms: Optional[float] = None
+    bathrooms: Optional[float] = None
+    listing_status: ListingStatusEnum
+
     listing_agent: Optional[ListingContactResponse] = None
     listing_office: Optional[ListingContactResponse] = None
     listing_history: List[ListingHistoryResponse] = Field(default_factory=list)
@@ -86,17 +82,6 @@ class ResidenceResponse(CamelModel):
                     interior_entity_key=child.interior_entity_key,
                     type=child.type,
                 ))
-
-        listing_response = None
-        if listing:
-            listing_response = ListingResponse(
-                id=listing.id,
-                price=listing.price,
-                hoa_fee=listing.hoa_fee,
-                bedrooms=listing.bedrooms,
-                bathrooms=listing.bathrooms,
-                listing_status=listing.listing_status
-            )
 
         agent_response = None
         if listing_agent:
@@ -148,11 +133,16 @@ class ResidenceResponse(CamelModel):
             construction_year=specs.construction_year if specs else None,
             length=dimensions.length if dimensions else None,
             width=dimensions.width if dimensions else None,
-            listing=listing_response,
+            price=listing.price if listing else None,
+            hoa_fee=listing.hoa_fee if listing else None,
+            bedrooms=listing.bedrooms if listing else None,
+            bathrooms=listing.bathrooms if listing else None,
+            listing_status=listing.listing_status if listing else ListingStatusEnum.inactive,
             listing_agent=agent_response,
             listing_office=office_response,
             listing_history=history_responses,
             children=children_responses
+            
         )
 
 

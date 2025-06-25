@@ -8,7 +8,7 @@ import re
 from entities.utils.filter_operations import FilterOperators
 
 class SingleTableFeatures:    
-    def __init__(self, model: Type, date_fields: Optional[List[str]] = None, query_params: Optional[Dict[str, Any]] = None):
+    def __init__(self, model: Type, date_fields: Optional[List[str]] = None, query_params: Optional[Dict[str, Any]] = None, default_sort_field: str = "createdAt"):
         DEFAULT_LIMIT = 25
         MAX_LIMIT = 100
         DEFAULT_TIMEZONE_STR = "Asia/Jerusalem"
@@ -16,6 +16,7 @@ class SingleTableFeatures:
         self.model = model
         self.query_params = query_params or {}
         self.date_fields = date_fields or []
+        self.default_sort_field = default_sort_field
         
         self.page = int(self.query_params.get("page", 1))
         requested_limit = int(self.query_params.get("limit", DEFAULT_LIMIT))

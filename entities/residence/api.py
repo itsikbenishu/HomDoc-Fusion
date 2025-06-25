@@ -20,8 +20,7 @@ def get_residence_srv():
 @api_router.get(
     "/api/residence",
     summary="Retrieve a list of Residences with advanced filtering, sorting, and pagination",
-    response_model=ResponseModel[List[ResidenceResponse]],
-        description="""
+    description="""
 Fetch a list of Residences from the database with support for:
 
 **Query Parameters:**
@@ -42,9 +41,9 @@ Fetch a list of Residences from the database with support for:
 - `[$wildcard]=start|end|both`: Wildcard matching position for LIKE/ILIKE filters
 
 **Example request:**
-/api/residence?page=1&limit=20&sort=-createdAt&price[$in]=1000,2000&createdAt[$gte]=2024-01-01&description[$ilike]=garden
+/api/residence?page=1&limit=20&sort=-createdAt&price[$in]=1000,2000&createdAt[$gte]=2024-01-01&description[$ilike]=new
 
-This allows powerful querying across multiple related models (except for one-to-many relations, such as List History) using query string alone.
+This allows powerful querying across multiple related models (except for one-to-many relations, such as List history using query string alone.
 """
 )
 async def get_residence(
@@ -73,6 +72,8 @@ async def get_residence(
             data=data,
             status=status.HTTP_200_OK
         )
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch residences: {e}")
 
