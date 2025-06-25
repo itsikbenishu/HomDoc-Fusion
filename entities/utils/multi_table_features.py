@@ -1,3 +1,4 @@
+from fastapi import status 
 from typing import List, Type, Dict, Any, Optional
 from sqlalchemy.sql import Select, ColumnElement
 from sqlalchemy.orm import class_mapper
@@ -25,7 +26,7 @@ class MultiTableFeatures:
         self.date_fields = date_fields or []
         self.query_params = query_params or {}
         
-        self.single_table_features = SingleTableFeatures(self.main_model, self.query_params)
+        self.single_table_features = SingleTableFeatures(self.main_model,self.date_fields, self.query_params)
         self.filter_ops = self.single_table_features.filter_ops
         self.operators = self.single_table_features.operators
 
@@ -123,7 +124,7 @@ class MultiTableFeatures:
             error_msg += f" Did you mean: {', '.join(similar_fields[:3])}?"
         else:
             error_msg += f" You can use one of these: {available_fields}"
-        raise HTTPException(status_code=400, detail=error_msg)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
     def _find_model_for_field(self, field_name: str) -> Optional[Type]:
         model = self.field_to_model_map.get(field_name)

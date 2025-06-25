@@ -31,7 +31,7 @@ async def get_newest_properties(
         data = get_home_doc_srv().get(session, query_dict)
         return ResponseModel(message="Newest properties fetched successfully.", data=data, status=status.HTTP_200_OK)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch newest properties: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch newest properties: {e}")
 
 @api_router.get("/api/home_docs/oldest-properties", response_model=ResponseModel[List[HomeDoc]])
 async def get_oldest_properties(
@@ -48,7 +48,7 @@ async def get_oldest_properties(
         data = get_home_doc_srv().get(session, query_dict)
         return ResponseModel(message="Oldest properties fetched successfully.", data=data, status=status.HTTP_200_OK)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch oldest properties: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch oldest properties: {e}")
 
 @api_router.get(
     "/api/home_docs/",
@@ -99,8 +99,10 @@ async def get_home_docs(
 
         data = get_home_doc_srv().get(session, query_dict)
         return ResponseModel(message="HomeDocs fetched successfully.", data=data, status=status.HTTP_200_OK)
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch home docs: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch home docs: {e}")
 
 @api_router.get("/api/home_docs/{home_doc_id}", response_model=ResponseModel[HomeDoc])
 async def get_home_doc(
@@ -113,7 +115,7 @@ async def get_home_doc(
             raise HTTPException(status_code=404, detail="HomeDoc not found")
         return ResponseModel(message="HomeDoc retrieved successfully.", data=data, status=status.HTTP_200_OK)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve HomeDoc: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to retrieve HomeDoc: {e}")
 
 @api_router.post("/api/home_docs", response_model=ResponseModel[HomeDoc], status_code=status.HTTP_201_CREATED)
 async def create_home_doc(
@@ -126,7 +128,7 @@ async def create_home_doc(
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create HomeDoc: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create HomeDoc: {e}")
 
 @api_router.put("/api/home_docs/{home_doc_id}", response_model=ResponseModel[HomeDoc])
 async def update_home_doc(
@@ -140,7 +142,7 @@ async def update_home_doc(
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update HomeDoc: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update HomeDoc: {e}")
 
 @api_router.delete("/api/home_docs/{home_doc_id}", response_model=ResponseModel[None])
 async def delete_home_doc(
@@ -153,4 +155,4 @@ async def delete_home_doc(
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete HomeDoc: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to delete HomeDoc: {e}")
