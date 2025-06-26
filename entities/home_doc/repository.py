@@ -19,9 +19,6 @@ class HomeDocRepository(SingleEntityRepository[HomeDoc]):
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc] | List[Dict[str, Any]]:
         features = SingleTableFeatures(HomeDoc, ["createdAt", "updatedAt"], query_params)
         statement = features.fields_selection().filter().sort().paginate()
-        print("======:")
-        print("SQL Query:", str(statement.compile(compile_kwargs={"literal_binds": True})))
-        print("=======:")
 
         if features.selected_columns:
             results = session.exec(statement).all()

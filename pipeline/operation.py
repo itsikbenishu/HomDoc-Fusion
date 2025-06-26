@@ -15,3 +15,8 @@ class Operation:
     def set_context(self, context):
         self._context = context
 
+    def get_context_value(self, key: str):
+        return self._context.get(key, None)
+
+    def set_context_value(self, key: str, value):
+        self._context[key] = value
