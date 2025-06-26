@@ -35,6 +35,7 @@ class FusionOper(Operation):
                     external_ids,
                     session
                 )
+                print("ids_by_external_ids:", ids_by_external_ids)
 
                 for propertyListing in propertyListings:
                     if propertyListing.rentcast_id in ids_by_external_ids:
@@ -42,6 +43,8 @@ class FusionOper(Operation):
 
                 self.set_context_value("rooms_numbers_by_external_ids", rooms_numbers_by_external_ids)
                 output = propertyListings
+                print("rooms_numbers_by_external_ids:", rooms_numbers_by_external_ids)
+                print("propertyListings:", propertyListings)
                 
                 return output
             except Exception as e:
