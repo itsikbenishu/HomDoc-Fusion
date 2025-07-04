@@ -1,10 +1,9 @@
 from sqlmodel import Session
 from entities.residence.repository import ResidenceRepository
 from entities.residence.service import ResidenceService
-from entities.home_doc.service import HomeDocService
-from entities.home_doc.repository import HomeDocRepository
-from entities.common.enums import HomeDocCategoriesEnum, HomeDocTypeEnum
-from entities.home_doc.models import HomeDoc
+from entities.residence.dtos import ResidenceCreate, ListingContactCreate, ListingHistoryCreate
+from entities.common.enums import HomeDocTypeEnum, HomeDocCategoriesEnum, ListingStatusEnum
+from fusion.rental_listing.transformation import PropertyListing
 from pipeline.operation import Operation
 from db.session import engine
 
@@ -15,8 +14,6 @@ class FusionOper(Operation):
     def run(self, input):
         residence_repo = ResidenceRepository.get_instance()
         residence_srv = ResidenceService.get_instance(residence_repo)
-        home_doc_repo = HomeDocRepository.get_instance()
-        home_doc_srv = HomeDocService.get_instance(home_doc_repo)
 
         with Session(engine) as session:
             try:
@@ -50,3 +47,46 @@ class FusionOper(Operation):
             except Exception as e:
                 print(f"error: {str(e)}")
                 raise
+
+    def property_listing_to_residence(property_listing: PropertyListing) -> ResidenceCreate:
+        return ResidenceCreate(
+            external_id=property_listing.rentcastId,
+            interior_entity_key=property_listing.interiorEntityKey,
+            category=HomeDocCategoriesEnum.ONE_STORY_HOUSE,  
+            type=HomeDocTypeEnum.PROPERTY, 
+            description=None, 
+            extra_data=[],
+            area=property_listing.area,
+            sub_entities_quantity=None,
+            construction_year=property_listing.construction_Year,
+            length=None,
+            width=None,
+            price=property_listing.price,
+            hoa_fee=property_listing.hoa.fee if property_listing.hoa else None,
+            bedrooms=property_listing.bedrooms,
+            bathrooms=property_listing.bathrooms,
+            listing_status=property_listing.status or ListingStatusEnum.inactive,
+            listing_agent=ListingContactCreate(
+                name=property_listing.listingAgent.name if property_listing.listingAgent else None,
+                phone=property_listing.listingAgent.phone if property_listing.listingAgent else None,
+                email=property_listing.listingAgent.email if property_listing.listingAgent else None,
+                website=property_listing.listingAgent.website if property_listing.listingAgent else None,
+            ) if property_listing.listingAgent else None,
+            listing_office=ListingContactCreate(
+                name=property_listing.listingOffice.name if property_listing.listingOffice else None,
+                phone=property_listing.listingOffice.phone if property_listing.listingOffice else None,
+                email=property_listing.listingOffice.email if property_listing.listingOffice else None,
+                website=property_listing.listingOffice.website if property_listing.listingOffice else None,
+            ) if property_listing.listingOffice else None,
+            listing_history=[
+                ListingHistoryCreate(
+                    event=item.event,
+                    price=item.price,
+                    listing_type=item.listingType,
+                    listed_date=item.listedDate,
+                    removed_date=item.removedDate,
+                    days_on_market=item.daysOnMarket
+                ) for item in property_listing.history.values()
+            ] if property_listing.history else []
+        )
+
