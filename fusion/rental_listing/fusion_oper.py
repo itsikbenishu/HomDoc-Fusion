@@ -1,6 +1,5 @@
 from sqlmodel import Session
 from entities.residence.repository import ResidenceRepository
-from entities.residence.service import ResidenceService
 from entities.residence.dtos import ResidenceCreate, ListingContactCreate, ListingHistoryCreate
 from entities.common.enums import HomeDocTypeEnum, HomeDocCategoriesEnum, ListingStatusEnum
 from fusion.rental_listing.transformation import PropertyListing
@@ -13,7 +12,6 @@ class FusionOper(Operation):
 
     def run(self, input):
         residence_repo = ResidenceRepository.get_instance()
-        residence_srv = ResidenceService.get_instance(residence_repo)
 
         with Session(engine) as session:
             try:
