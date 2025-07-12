@@ -17,7 +17,7 @@ class ModifyOper(Operation):
                 property = input
 
                 if(hasattr(property,"id")):
-                    residence_srv.updtae(
+                    residence_srv.update(
                         property,
                         session
                     )

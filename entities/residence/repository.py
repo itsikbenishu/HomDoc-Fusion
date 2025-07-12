@@ -99,7 +99,7 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
                 for row in results
             ]
 
-    def create(self, data: Dict[str, Any], session: Session) -> HomeDoc:
+    def create(self, data: Dict[str, Any], session: Session, auto_commit: bool = True) -> HomeDoc:
         agent = None
         office = None
 
@@ -154,13 +154,13 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         session.add(dimensions)
         session.add(listings)
         session.add_all(listings_history)
-        session.commit()
-
+        if auto_commit:
+            session.commit()
+        else:
+            session.flush()
         return self.get_by_id(home_doc.id, session)
 
-
-
-    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> HomeDoc:
+    def update(self, item_id: int, data: Dict[str, Any], session: Session, auto_commit: bool = True) -> HomeDoc:
         home_doc = self.get_by_id(item_id, session)
 
         home_doc_fields = set(HomeDoc.model_fields) - {'id'}
@@ -199,7 +199,10 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         )
 
         try:
-            session.commit()
+            if auto_commit:
+                session.commit()
+            else:
+                session.flush()
         except IntegrityError as e:
             if "unique_listing_entry" in str(e):
                 session.rollback()
@@ -212,10 +215,13 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
 
         return home_doc
 
-    def delete(self, item_id: int, session: Session) -> None:
+    def delete(self, item_id: int, session: Session, auto_commit: bool = True) -> None:
         residence_filter = HomeDoc.type.in_(self.types)
         statement = select(self.primary_model).where(self.primary_model.id == item_id, residence_filter)
         result = session.exec(statement).one_or_none()
         if result:
             session.delete(result)
-            session.commit()
+            if auto_commit:
+                session.commit()
+            else:
+                session.flush()

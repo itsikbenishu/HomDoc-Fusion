@@ -18,13 +18,13 @@ class SingleEntityRepository(Repository, Generic[ModelType]):
         pass
 
     @abstractmethod
-    def create(self, data: ModelType, session: Session) -> ModelType:
+    def create(self, data: ModelType, session: Session, auto_commit: bool = True) -> ModelType:
         pass
 
     @abstractmethod
-    def update(self, data: ModelType, session: Session) -> ModelType:
+    def update(self, data: ModelType, session: Session, auto_commit: bool = True) -> ModelType:
         pass
 
     @abstractmethod
-    def delete(self, item_id: int, session: Session) -> None:
+    def delete(self, item_id: int, session: Session, auto_commit: bool = True) -> None:
         pass

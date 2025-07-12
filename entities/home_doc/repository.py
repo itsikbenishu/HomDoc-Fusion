@@ -35,27 +35,34 @@ class HomeDocRepository(SingleEntityRepository[HomeDoc]):
 
         return result_list
 
-    def create(self, data: HomeDoc, session: Session) -> HomeDoc:
+    def create(self, data: HomeDoc, session: Session, auto_commit: bool = True) -> HomeDoc:
         session.add(data)
-        session.commit()
-        session.refresh(data)
-
+        if auto_commit:
+            session.commit()
+            session.refresh(data)
+        else:
+            session.flush()
         return data
 
-    def update(self, home_doc: HomeDoc, session: Session) -> HomeDoc:
+    def update(self, home_doc: HomeDoc, session: Session, auto_commit: bool = True) -> HomeDoc:
         session.add(home_doc)
-        session.commit()
-        session.refresh(home_doc)
-
+        if auto_commit:
+            session.commit()
+            session.refresh(home_doc)
+        else:
+            session.flush()
         return home_doc
 
-    def delete(self, item_id: int, session: Session) -> None:
+    def delete(self, item_id: int, session: Session, auto_commit: bool = True) -> None:
         statement = select(HomeDoc).where(HomeDoc.id == item_id)
         results = session.exec(statement)
         home_doc = results.one_or_none()
         if home_doc:
             session.delete(home_doc)
-            session.commit()
+            if auto_commit:
+                session.commit()
+            else:
+                session.flush()
 
     def get_ids_by_external_ids(self, external_ids: List[str], session: Session) -> Dict[str, int]:
         statement = select(HomeDoc.id, HomeDoc.external_id).where(HomeDoc.external_id.in_(external_ids))

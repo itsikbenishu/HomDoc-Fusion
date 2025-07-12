@@ -99,7 +99,7 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
         pass
 
     @abstractmethod
-    def create(self, data: Dict[str, Any], session: Session) -> PrimaryModelType:
+    def create(self, data: Dict[str, Any], session: Session, auto_commit: bool = True) -> PrimaryModelType:
         pass
 
     def _create_one_to_one_relationship(
@@ -147,7 +147,7 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
         return session.exec(select(model).where(and_(*filters))).first()
     
     @abstractmethod
-    def update(self, item_id: int, data: Dict[str, Any], session: Session) -> PrimaryModelType:
+    def update(self, item_id: int, data: Dict[str, Any], session: Session, auto_commit: bool = True) -> PrimaryModelType:
         pass
 
     def _update_one_to_one_relationship(self, 
@@ -229,7 +229,7 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
             setattr(primary_instance, relationship_field, new_instance)
 
     @abstractmethod
-    def delete(self, item_id: int, session: Session) -> None:
+    def delete(self, item_id: int, session: Session, auto_commit: bool = True) -> None:
         pass
     
     def get_related_models(self) -> List[Type[SQLModel]]:
