@@ -38,12 +38,11 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
         else:
             return results 
 
-    def create(self, data: ResidenceCreate, session: Session) -> ResidenceResponse:
+    def create(self, data: ResidenceCreate, session: Session, auto_commit: bool = True) -> ResidenceResponse:
         try:
             residence_dict = data.model_dump(exclude_none=True)
             self._validate_entity(residence_dict)
-            
-            home_doc = self.repo.create(residence_dict, session)
+            home_doc = self.repo.create(residence_dict, session, auto_commit=auto_commit)
             return self._to_response(home_doc)
         except ValueError:
             raise
@@ -51,13 +50,11 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
             session.rollback()
             raise Exception(f"Error creating residence: {str(e)}")
 
-    def update(self, item_id: int, data: ResidenceUpdate, session: Session) -> ResidenceResponse:
+    def update(self, item_id: int, data: ResidenceUpdate, session: Session, auto_commit: bool = True) -> ResidenceResponse:
         try:
-            # המרת ResidenceUpdate ל-dict
             residence_dict = data.model_dump(exclude_unset=True)
             self._validate_entity(residence_dict)
-            
-            home_doc = self.repo.update(item_id, residence_dict, session)
+            home_doc = self.repo.update(item_id, residence_dict, session, auto_commit=auto_commit)
             if not home_doc:
                 raise ValueError(f"Residence with id {item_id} not found")
             return self._to_response(home_doc)
@@ -67,9 +64,9 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
             session.rollback()
             raise Exception(f"Error updating residence with id {item_id}: {str(e)}")
 
-    def delete(self, item_id: int, session: Session) -> None:
+    def delete(self, item_id: int, session: Session, auto_commit: bool = True) -> None:
         try:
-            self.repo.delete(item_id, session)
+            self.repo.delete(item_id, session, auto_commit=auto_commit)
         except Exception as e:
             session.rollback()
             raise Exception(f"Error deleting residence with id {item_id}: {str(e)}")

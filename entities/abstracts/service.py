@@ -24,13 +24,16 @@ class Service(Generic[ResponseType, RepoType, CreateDTO, UpdateDTO], ABC):
         pass
 
     @abstractmethod
-    def create(self, data: CreateDTO, session: Session) -> ResponseType:
+    def create(self, data: CreateDTO, session: Session, auto_commit: bool = True) -> ResponseType:
         pass
 
     @abstractmethod
-    def update(self, item_id: int, data: UpdateDTO, session: Session) -> ResponseType:
+    def update(self, item_id: int, data: UpdateDTO, session: Session, auto_commit: bool = True) -> ResponseType:
         pass
 
     @abstractmethod
-    def delete(self, item_id: int, session: Session) -> Union[bool, None]:
+    def delete(self, item_id: int, session: Session, auto_commit: bool = True) -> Union[bool, None]:
         pass
+
+    def commit(self, session: Session) -> None:
+        session.commit()
