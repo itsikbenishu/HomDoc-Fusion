@@ -2,6 +2,7 @@ import requests
 import json
 from datetime import datetime, date
 from urllib.parse import quote
+from dateutil.relativedelta import relativedelta
 from pipeline.operation import Operation
 from db.constants import select, update_row_by_id
 from fusion.rental_listing.api_config import api_settings
@@ -26,6 +27,7 @@ class FetchOper(Operation):
             response = self._fetch(self._property_type, limit, offset)
             rentcast_stats["api_calls_number"] = 1
             rentcast_stats["offset_value"] = offset +  limit
+            rentcast_stats["next_payment_date"] = self._increment_payment_date_by_month(rentcast_stats["next_payment_date"])
             update_row_by_id("rentcast_stats", rentcast_stats, 1)
             output = response.json()
         elif rentcast_stats["api_calls_number"] >= rentcast_stats["api_calls_max_number"]:    
@@ -35,7 +37,7 @@ class FetchOper(Operation):
         else:
             response = self._fetch(self._property_type, limit, offset )
             rentcast_stats["api_calls_number"] = rentcast_stats["api_calls_number"] + 1
-            rentcast_stats["offset"] = offset +  limit
+            rentcast_stats["offset_value"] = offset +  limit
             update_row_by_id("rentcast_stats", rentcast_stats, 1)
             output = response.json()
 
@@ -63,3 +65,9 @@ class FetchOper(Operation):
             return False
         else:
             return True
+
+    def _increment_payment_date_by_month(self, date):
+        current_payment_date = datetime.strptime(str(date), "%Y-%m-%d").date()
+        next_payment_date = current_payment_date + relativedelta(months=1)
+        
+        return next_payment_date.isoformat()

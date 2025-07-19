@@ -16,22 +16,23 @@ class ModifyOper(Operation):
             raise Exception("Session not found in context. Modify Operation must be run within Modify Batch.")
 
         try:
-            property = input
+            residence_id, residence = input
 
-            if(hasattr(property,"id")):
+            if(residence_id):
                 modified_residence = residence_srv.update(
-                    property,
-                    session,
+                    item_id=residence_id,
+                    data=residence,
+                    session=session,
                     auto_commit=False  
                 )
-                print(f"Updating a property with id: {modified_residence.id} and address: {modified_residence.interior_entity_key}")
+                print(f"Updating a residence with id: {modified_residence.id} and address: {modified_residence.interior_entity_key}")
             else:
                 modified_residence = residence_srv.create(
-                    property,
-                    session,
+                    data=residence,
+                    session=session,
                     auto_commit=False  
                 )
-                print(f"Creating a new property with id: {modified_residence.id} and address: {modified_residence.interior_entity_key}")
+                print(f"Creating a new residence with id: {modified_residence.id} and address: {modified_residence.interior_entity_key}")
             output = modified_residence
             
             return output

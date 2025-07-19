@@ -52,12 +52,12 @@ class Listing(SQLModel, table=True):
     )
     bedrooms: Optional[float] = Field(default=None)
     bathrooms: Optional[float] = Field(default=None)
-    listingStatus: ListingStatusEnum = Field(
-    default=ListingStatusEnum.inactive,
-    sa_column=Column(
-        "listingStatus", Enum(ListingStatusEnum, name='listing_status_enum')
-    ),
-)
+    listing_status: ListingStatusEnum = Field(
+        default=ListingStatusEnum.inactive,
+        alias="listingStatus",
+        sa_column=Column("listingStatus", Enum(ListingStatusEnum, name='listing_status_enum'))
+    )
+    
     home_doc: Optional["HomeDoc"] = Relationship(back_populates="listing") 
     model_config = ConfigDict(
         validate_by_name=True,

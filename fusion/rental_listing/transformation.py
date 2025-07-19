@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, Field, EmailStr, field_serializer
+from pydantic import BaseModel, Field, EmailStr, field_serializer, field_validator
 from typing import Optional, Dict
 from datetime import datetime
 from entities.common.enums import ListingStatusEnum, ListingTypeEnum
@@ -32,14 +32,14 @@ class HistoryItem(BaseModel):
     
 class PropertyListing(BaseModel):
     rentcastId: str = Field(alias="id")
-    interiorEntityKey: str = Field(alias="formattedAddress")
+    interiorEntityKey: str = Field(default=None, alias="formattedAddress")
     county: Optional[str] = None
     propertyType: PropertyTypeEnum
     bedrooms: Optional[float] = None
     bathrooms: Optional[float] = None
-    area: Optional[float] = Field(alias="squareFootage")
+    area: Optional[float] = Field(default=None, alias="squareFootage")
     lotSize: Optional[float] = None
-    construction_Year: Optional[int] = Field(alias="yearBuilt")
+    constructionYear: Optional[int] = Field(default=None, alias="yearBuilt")
     hoa: Optional[HOA] = None
     status: Optional[ListingStatusEnum] = None
     price: Optional[float] = None
@@ -55,6 +55,12 @@ class PropertyListing(BaseModel):
     listingOffice: Optional[Contact] = None
     history: Optional[Dict[str, HistoryItem]] = None
 
+    @field_validator("status", mode="before")
+    def normalize_status(cls, value):
+        if isinstance(value, str):
+            return value.lower()
+        return value
+    
     @field_serializer("area")
     def serialize_square_footage(self, value):
         if value is None:
@@ -71,10 +77,11 @@ class PropertyListing(BaseModel):
 
 
 def filter_fields(property_listing):
-    exclude_fields = { "addressLine1", "addressLine2", "city", "state", "zipCode",  "builder", "latitude", "longitude" 
-                        "history", "listingAgent", "listingOffice", "listingType",    # temporary
+    exclude_fields = { "addressLine1", "addressLine2", "city", "state", "zipCode",  "builder", "latitude", "longitude", 
                         "listedDate", "removedDate", "createdDate", "lastSeenDate"    # temporary
                       }
+
+    print(property_listing.items())
 
     filtered_fields = {
         field: value for field, value in property_listing.items() if field not in exclude_fields
@@ -83,5 +90,5 @@ def filter_fields(property_listing):
     return filtered_fields
 
 
-property_listing_transform = lambda property_listing: PropertyListing(**filter_fields(property_listing))
+property_listing_transform = lambda property_listing: PropertyListing.model_validate(filter_fields(property_listing))
 

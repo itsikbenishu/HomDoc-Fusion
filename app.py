@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from typing import Any
+from typing import Any, List
+from datetime import datetime
 import uvicorn
 from app_config import app_settings
 from fastapi import FastAPI
@@ -48,14 +49,27 @@ api_router_fusion = APIRouter(
 async def home(request: Request):
     return templates.TemplateResponse("welcome.html", {"request": request})
 
-# @api_router_fusion.get("/api/fuse", response_model=ResponseModel[list[dict[str, Any]]], tags=["HomeDocsFusion"])
-# async def run_fusion():
-#     try:
-#         run_pipeline("Single Family")
-#         return ResponseModel(message="HomeDoc retrieved successfully.", data=[{"id": 1, "name": "Itsik"}], status=status.HTTP_200_OK)
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Failed to retrieve fuse HomeDocs: {e}")
-
+@api_router_fusion.get("/api/fuse", response_model=ResponseModel[List[Any]], tags=["HomeDocsFusion"])
+async def run_fusion():
+    try:
+        start_time = datetime.now()
+        res = run_pipeline("Single Family")
+        end_time = datetime.now()
+        duration = end_time - start_time  
+        print(f"Pipeline completed in {duration.total_seconds()} seconds")  
+        
+        return ResponseModel(
+            message="HomeDocs retrieved successfully after fusion.",
+            data=res,
+            status=status.HTTP_200_OK,
+            metadata={
+                "startTime": start_time.isoformat(),
+                "endTime": end_time.isoformat(),
+                "duration": duration.total_seconds()
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve fused HomeDocs: {e}")
 
 app.include_router(api_router_fusion)
 app.include_router(home_doc_api_router)

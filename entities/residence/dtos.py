@@ -219,6 +219,7 @@ class ListingContactUpdate(CamelModel):
 
 
 class ListingHistoryUpdate(CamelModel):
+    id: Optional[int] = None
     event: Optional[str] = None
     price: Optional[float] = None
     listing_type: Optional[ListingTypeEnum] = None

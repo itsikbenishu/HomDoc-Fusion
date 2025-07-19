@@ -7,3 +7,4 @@ class ResponseModel(GenericModel, Generic[T]):
     message: str
     status: int
     data: Optional[T]
+    metadata: Optional[dict] = None
