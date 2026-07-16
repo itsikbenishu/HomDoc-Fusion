@@ -8,6 +8,7 @@ password_encoded = quote_plus(db_settings.POSTGRES_PASSWORD)
 DATABASE_URL = (
     f"postgresql+psycopg://{db_settings.POSTGRES_USER}:{password_encoded}"
     f"@{db_settings.POSTGRES_HOST}:{db_settings.POSTGRES_PORT}/{db_settings.POSTGRES_DB}"
+    f"?sslmode=require"
 )
 
 engine = create_engine(DATABASE_URL, echo=True)

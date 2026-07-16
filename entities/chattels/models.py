@@ -11,6 +11,7 @@ class ChattelsSpecsAttributes(SQLModel, table=True):
     home_doc_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
+        index=True,
         alias="homeDocId",
         sa_column_kwargs={"name": "homeDocId"}
     )

@@ -12,6 +12,7 @@ class ResidenceSpecsAttributes(SQLModel, table=True):
     home_doc_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
+        index=True,
         alias="homeDocId",
         sa_column_kwargs={"name": "homeDocId"}
     )
@@ -41,6 +42,7 @@ class Listing(SQLModel, table=True):
     residence_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
+        index=True,
         alias="residenceId",
         sa_column_kwargs={"name": "residenceId"}
     )
@@ -122,6 +124,7 @@ class ListingHistory(SQLModel, table=True):
     residence_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
+        index=True,
         alias="residenceId",
         sa_column_kwargs={"name": "residenceId"}
     )

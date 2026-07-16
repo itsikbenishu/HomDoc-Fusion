@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, UniqueConstraint
 from sqlalchemy import Enum, Column, JSON, func, Integer, ForeignKey
 from pydantic import ConfigDict
 from datetime import datetime
@@ -15,16 +15,20 @@ class HomeDoc(CamelModel, table=True):
         default=None,
         foreign_key="home_docs.id",
         ondelete="CASCADE",
+        index=True,
         alias="fatherId",
         sa_column_kwargs={"name": "fatherId"}
     )
     external_id: Optional[str] = Field(
         default=None,
+        index=True,
         alias="externalId",
         sa_column_kwargs={"name": "externalId"}
     )
     interior_entity_key: str = Field(
         nullable=False,
+        unique=True,
+        index=True,
         alias="interiorEntityKey",
         sa_column_kwargs={"name": "interiorEntityKey"}
     )
@@ -44,10 +48,10 @@ class HomeDoc(CamelModel, table=True):
         sa_column_kwargs={"name": "updatedAt", "server_default": func.now()}
     )
     category: HomeDocCategoriesEnum = Field(
-        sa_column=Enum(HomeDocCategoriesEnum),
+        sa_column=Column("category", Enum(HomeDocCategoriesEnum, name="home_doc_category_enum"), nullable=False),
     )
     type: HomeDocTypeEnum = Field(
-        sa_column=Enum(HomeDocTypeEnum),
+        sa_column=Column("type", Enum(HomeDocTypeEnum, name="home_doc_type_enum"), nullable=False),
     )
     description: Optional[str] = Field(default=None)
     extra_data: Optional[List[Dict[str, str]]] = Field(
@@ -62,7 +66,8 @@ class HomeDoc(CamelModel, table=True):
             "listingAgentId",
             Integer,
             ForeignKey("listing_contact.id", ondelete="SET NULL"),
-            nullable=True
+            nullable=True,
+            index=True
         )
     )
 
@@ -72,7 +77,8 @@ class HomeDoc(CamelModel, table=True):
             "listingOfficeId",
             Integer,
             ForeignKey("listing_contact.id", ondelete="SET NULL"),
-            nullable=True
+            nullable=True,
+            index=True
         )
     )
 
@@ -110,17 +116,22 @@ class HomeDoc(CamelModel, table=True):
 
 class HomeDocRelations(SQLModel, table=True):
     __tablename__ = "home_docs_relations"
+    __table_args__ = (
+        UniqueConstraint("homeDocId", "subHomeDocId", name="uq_home_docs_relations_pair"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     home_doc_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
+        index=True,
         alias="homeDocId",
         sa_column_kwargs={"name": "homeDocId"}
     )
     sub_home_doc_id: int = Field(
         foreign_key="home_docs.id",
         ondelete="CASCADE",
+        index=True,
         alias="subHomeDocId",
         sa_column_kwargs={"name": "subHomeDocId"}
     )

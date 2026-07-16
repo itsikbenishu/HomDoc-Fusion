@@ -8,3 +8,5 @@ sqlmodel
 fastapi[all]
 uvicorn
 python-dateutil
+supabase
+alembic
