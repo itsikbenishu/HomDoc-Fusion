@@ -11,8 +11,13 @@ DATABASE_URL = (
     f"?sslmode=require"
 )
 
-engine = create_engine(DATABASE_URL, echo=True)
-
+engine = create_engine(
+    DATABASE_URL,
+    echo=True,
+    connect_args={
+        "prepare_threshold": None
+    }
+)
 def get_session():
     with Session(engine) as session:
         yield session
