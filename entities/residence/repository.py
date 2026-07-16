@@ -120,10 +120,10 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             )
 
         home_doc = HomeDoc(**{
-            field_name: field_value 
-            for field_name, field_value in data.items() 
-            if field_name in HomeDoc.model_fields 
-            and field_name not in ['id', 'listing_agent_id', 'listing_office_id']
+            field_name: field_value
+            for field_name, field_value in data.items()
+            if field_name in HomeDoc.model_fields
+            and field_name not in ['id', 'listing_agent_id', 'listing_office_id', 'listing_agent', 'listing_office', 'listing_history']
         })
         home_doc.listing_agent_id = agent.id if agent else None
         home_doc.listing_office_id = office.id if office else None
@@ -163,7 +163,7 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
     def update(self, item_id: int, data: Dict[str, Any], session: Session, auto_commit: bool = True) -> HomeDoc:
         home_doc = self.get_by_id(item_id, session)
 
-        home_doc_fields = set(HomeDoc.model_fields) - {'id'}
+        home_doc_fields = set(HomeDoc.model_fields) - {'id', 'listing_agent', 'listing_office', 'listing_history'}
         for field_name, field_value in data.items():
             if field_name in home_doc_fields:
                 setattr(home_doc, field_name, field_value)

@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict
-from sqlmodel import SQLModel, Field, Relationship, Enum, Column
+from sqlmodel import SQLModel, Field, Relationship, Enum, Column, UniqueConstraint
 from datetime import datetime
 from entities.home_doc.models import HomeDoc
 from entities.common.enums import ListingStatusEnum, ListingTypeEnum
@@ -70,6 +70,9 @@ Listing.model_rebuild()
 
 class ListingContact(SQLModel, table=True):
     __tablename__ = "listing_contact"
+    __table_args__ = (
+        UniqueConstraint("name", "phone", "email", name="uq_listing_contact_identity"),
+    )
 
     id: int = Field(default=None, primary_key=True)
     name: str = Field(index=True)
