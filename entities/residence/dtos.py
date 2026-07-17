@@ -174,8 +174,8 @@ class ResidenceCreate(CamelModel):
     sub_entities_quantity: Optional[int] = None
     construction_year: Optional[int] = None
 
-    length: Optional[int] = None
-    width: Optional[int] = None
+    length: Optional[float] = None
+    width: Optional[float] = None
 
     price: Optional[float] = None
     hoa_fee: Optional[float] = None
@@ -237,8 +237,8 @@ class ResidenceUpdate(CamelModel):
     sub_entities_quantity: Optional[int] = None
     construction_year: Optional[int] = None
 
-    length: Optional[int] = None
-    width: Optional[int] = None
+    length: Optional[float] = None
+    width: Optional[float] = None
 
     price: Optional[float] = None
     hoa_fee: Optional[float] = None
