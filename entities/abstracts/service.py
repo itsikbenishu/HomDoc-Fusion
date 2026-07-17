@@ -1,6 +1,8 @@
+import re
 from abc import ABC, abstractmethod
 from sqlmodel import Session
 from typing import Optional, Dict, Any, TypeVar, Generic, List, Union
+from sqlalchemy.exc import IntegrityError
 from entities.utils.decorators import singleton
 from entities.abstracts.repository import Repository
 
@@ -37,3 +39,10 @@ class Service(Generic[ResponseType, RepoType, CreateDTO, UpdateDTO], ABC):
 
     def commit(self, session: Session) -> None:
         session.commit()
+
+    def _format_integrity_error(self, e: IntegrityError) -> str:
+        match = re.search(r'Key \(([^)]+)\)=\(([^)]+)\) already exists', str(e.orig))
+        if match:
+            field, value = match.groups()
+            return f"A record with {field}='{value}' already exists."
+        return "This record conflicts with an existing one (duplicate key)."

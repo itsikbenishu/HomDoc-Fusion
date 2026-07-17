@@ -1,4 +1,5 @@
 from sqlmodel import Session
+from sqlalchemy.exc import IntegrityError
 from entities.utils.decorators import singleton
 from typing import Dict, Any, List, Optional
 from entities.abstracts.service import Service
@@ -46,6 +47,9 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
             return self._to_response(home_doc)
         except ValueError:
             raise
+        except IntegrityError as e:
+            session.rollback()
+            raise ValueError(self._format_integrity_error(e))
         except Exception as e:
             session.rollback()
             raise Exception(f"Error creating residence: {str(e)}")
@@ -60,6 +64,9 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
             return self._to_response(home_doc)
         except ValueError:
             raise
+        except IntegrityError as e:
+            session.rollback()
+            raise ValueError(self._format_integrity_error(e))
         except Exception as e:
             session.rollback()
             raise Exception(f"Error updating residence with id {item_id}: {str(e)}")
