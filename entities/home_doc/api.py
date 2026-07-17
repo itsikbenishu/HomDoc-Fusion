@@ -25,8 +25,7 @@ async def get_newest_properties(
         query_dict = {
             "type": HomeDocTypeEnum.PROPERTY,
             "limit": count,
-            "order": "created_at",
-            "offset": 0
+            "sort": "-createdAt",
         }
         data = get_home_doc_srv().get(session, query_dict)
         return ResponseModel(message="Newest properties fetched successfully.", data=data, status=status.HTTP_200_OK)
@@ -42,8 +41,7 @@ async def get_oldest_properties(
         query_dict = {
             "type": HomeDocTypeEnum.PROPERTY,
             "limit": count,
-            "order": "-created_at",
-            "offset": 0
+            "sort": "createdAt",
         }
         data = get_home_doc_srv().get(session, query_dict)
         return ResponseModel(message="Oldest properties fetched successfully.", data=data, status=status.HTTP_200_OK)
