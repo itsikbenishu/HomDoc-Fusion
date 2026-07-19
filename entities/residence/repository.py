@@ -74,6 +74,14 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         result = session.exec(statement).one_or_none()
         return result
 
+    def get_by_ids(self, item_ids: List[int], session: Session) -> Dict[int, HomeDoc]:
+        if not item_ids:
+            return {}
+        residence_filter = HomeDoc.type.in_(self.types)
+        statement = self._base_query.where(self.primary_model.id.in_(item_ids), residence_filter)
+        results = session.exec(statement).all()
+        return {home_doc.id: home_doc for home_doc in results}
+
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[HomeDoc] | List[Dict[str, Any]]:
         all_models = [self.primary_model] + self.get_related_models()
         features = MultiTableFeatures(
@@ -91,7 +99,6 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             return session.exec(statement).all()
         else:
             results = session.exec(statement).all()
-            print(results)
             column_names = [field.strip() for field in query_params.get("fields").split(",")]
 
             return [
@@ -99,7 +106,7 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
                 for row in results
             ]
 
-    def create(self, data: Dict[str, Any], session: Session, auto_commit: bool = True) -> HomeDoc:
+    def create(self, data: Dict[str, Any], session: Session, auto_commit: bool = True, reload: bool = True) -> HomeDoc:
         agent = None
         office = None
 
@@ -110,7 +117,6 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
                 data['listing_agent'],
                 unique_fields=["name", "phone", "email"]
             )
-        print( 'listing_office' in data, data)
         if 'listing_office' in data:
             office = self._create_or_get_many_to_one_relationship(
                 session,
@@ -158,10 +164,17 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
             session.commit()
         else:
             session.flush()
-        return self.get_by_id(home_doc.id, session)
+        return self.get_by_id(home_doc.id, session) if reload else home_doc
 
-    def update(self, item_id: int, data: Dict[str, Any], session: Session, auto_commit: bool = True) -> HomeDoc:
-        home_doc = self.get_by_id(item_id, session)
+    def update(
+        self,
+        item_id: int,
+        data: Dict[str, Any],
+        session: Session,
+        auto_commit: bool = True,
+        preloaded: Optional[HomeDoc] = None,
+    ) -> HomeDoc:
+        home_doc = preloaded or self.get_by_id(item_id, session)
 
         home_doc_fields = set(HomeDoc.model_fields) - {'id', 'listing_agent', 'listing_office', 'listing_history'}
         for field_name, field_value in data.items():

@@ -77,11 +77,9 @@ class PropertyListing(BaseModel):
 
 
 def filter_fields(property_listing):
-    exclude_fields = { "addressLine1", "addressLine2", "city", "state", "zipCode",  "builder", "latitude", "longitude", 
+    exclude_fields = { "addressLine1", "addressLine2", "city", "state", "zipCode",  "builder", "latitude", "longitude",
                         "listedDate", "removedDate", "createdDate", "lastSeenDate"    # temporary
                       }
-
-    print(property_listing.items())
 
     filtered_fields = {
         field: value for field, value in property_listing.items() if field not in exclude_fields

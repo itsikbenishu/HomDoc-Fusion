@@ -22,7 +22,6 @@ class HomeDocRepository(SingleEntityRepository[HomeDoc]):
 
         if features.selected_columns:
             results = session.exec(statement).all()
-            print(results)
             not_has_tuples_result = len(features.selected_columns) == 1
             if not_has_tuples_result:
                 alias = features.selected_columns[0]._label 

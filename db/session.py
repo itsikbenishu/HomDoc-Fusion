@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from urllib.parse import quote_plus
 from db.config import db_settings
+from app_config import app_settings
 
 password_encoded = quote_plus(db_settings.POSTGRES_PASSWORD)
 DATABASE_URL = (
@@ -13,7 +14,7 @@ DATABASE_URL = (
 
 engine = create_engine(
     DATABASE_URL,
-    echo=True,
+    echo=app_settings.DEBUG,
     connect_args={
         "prepare_threshold": None
     }

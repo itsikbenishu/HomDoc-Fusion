@@ -1,14 +1,17 @@
+import logging
 from fastapi import FastAPI, Request, APIRouter, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import RequestValidationError
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from typing import Any, List
 from datetime import datetime
 import uvicorn
 from app_config import app_settings
 from fastapi import FastAPI
+from logging_config import configure_logging
 from exceptions import (
     global_exception_handler,
     http_exception_handler,
@@ -18,6 +21,9 @@ from fusion.rental_listing.run_pipeline import run_pipeline
 from entities.abstracts.response_model import ResponseModel
 from entities.home_doc.api import api_router as home_doc_api_router
 from entities.residence.api import api_router as residence_api_router
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Fusion HomeDoc API",
@@ -53,11 +59,11 @@ async def home(request: Request):
 async def run_fusion():
     try:
         start_time = datetime.now()
-        res = run_pipeline("Single Family")
+        res = await run_in_threadpool(run_pipeline, "Single Family")
         end_time = datetime.now()
-        duration = end_time - start_time  
-        print(f"Pipeline completed in {duration.total_seconds()} seconds")  
-        
+        duration = end_time - start_time
+        logger.info(f"Pipeline completed in {duration.total_seconds()} seconds")
+
         return ResponseModel(
             message="HomeDocs retrieved successfully after fusion.",
             data=res,
@@ -76,4 +82,4 @@ app.include_router(home_doc_api_router)
 app.include_router(residence_api_router)
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="127.0.0.1", port=5000, reload=True)
+    uvicorn.run("app:app", host="127.0.0.1", port=5000, reload=app_settings.DEBUG)

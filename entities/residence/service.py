@@ -21,7 +21,7 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
         home_doc = self.repo.get_by_id(item_id, session)
         if not home_doc:
             return None
-        return self._to_response(home_doc)
+        return self.to_response(home_doc)
 
     def get(self, session: Session, query_params: Optional[Dict[str, Any]] = None) -> List[ResidenceResponse] | List[Dict[str, Any]]:
         if query_params is None:
@@ -29,22 +29,26 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
         query_params["type[$in]"] = self.types
         
         results = self.repo.get(session, query_params)
-        print("results:")
-        print(results)
         if not results:
             return None
-        
+
         if "fields" not in query_params:
-            return [self._to_response(home_doc) for home_doc in results]
+            return [self.to_response(home_doc) for home_doc in results]
         else:
             return results 
 
-    def create(self, data: ResidenceCreate, session: Session, auto_commit: bool = True) -> ResidenceResponse:
+    def create(
+        self,
+        data: ResidenceCreate,
+        session: Session,
+        auto_commit: bool = True,
+        reload: bool = True,
+    ) -> ResidenceResponse | HomeDoc:
         try:
             residence_dict = data.model_dump(exclude_none=True)
             self._validate_entity(residence_dict)
-            home_doc = self.repo.create(residence_dict, session, auto_commit=auto_commit)
-            return self._to_response(home_doc)
+            home_doc = self.repo.create(residence_dict, session, auto_commit=auto_commit, reload=reload)
+            return self.to_response(home_doc) if reload else home_doc
         except ValueError:
             raise
         except IntegrityError as e:
@@ -54,14 +58,22 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
             session.rollback()
             raise Exception(f"Error creating residence: {str(e)}")
 
-    def update(self, item_id: int, data: ResidenceUpdate, session: Session, auto_commit: bool = True) -> ResidenceResponse:
+    def update(
+        self,
+        item_id: int,
+        data: ResidenceUpdate,
+        session: Session,
+        auto_commit: bool = True,
+        preloaded: Optional[HomeDoc] = None,
+        reload: bool = True,
+    ) -> ResidenceResponse | HomeDoc:
         try:
             residence_dict = data.model_dump(exclude_unset=True)
             self._validate_entity(residence_dict)
-            home_doc = self.repo.update(item_id, residence_dict, session, auto_commit=auto_commit)
+            home_doc = self.repo.update(item_id, residence_dict, session, auto_commit=auto_commit, preloaded=preloaded)
             if not home_doc:
                 raise ValueError(f"Residence with id {item_id} not found")
-            return self._to_response(home_doc)
+            return self.to_response(home_doc) if reload else home_doc
         except ValueError:
             raise
         except IntegrityError as e:
@@ -78,7 +90,7 @@ class ResidenceService(Service[ResidenceResponse, ResidenceRepository, Residence
             session.rollback()
             raise Exception(f"Error deleting residence with id {item_id}: {str(e)}")
 
-    def _to_response(self, home_doc: HomeDoc) -> ResidenceResponse:
+    def to_response(self, home_doc: HomeDoc) -> ResidenceResponse:
         specs = getattr(home_doc, 'specs', None)
         dimensions = getattr(home_doc, 'dimensions', None)
         listing = getattr(home_doc, 'listing', None)

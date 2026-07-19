@@ -1,3 +1,4 @@
+import logging
 from sqlmodel import Session
 from entities.home_doc.repository import HomeDocRepository
 from entities.residence.dtos import ResidenceCreate, ListingContactCreate, ListingHistoryCreate, ResidenceUpdate, ListingContactUpdate, ListingHistoryUpdate
@@ -5,6 +6,8 @@ from entities.common.enums import HomeDocTypeEnum, HomeDocCategoriesEnum, Listin
 from fusion.rental_listing.transformation import PropertyListing
 from pipeline.operation import Operation
 from db.session import engine
+
+logger = logging.getLogger(__name__)
 
 class FusionOper(Operation):
     def __init__(self):
@@ -30,7 +33,6 @@ class FusionOper(Operation):
                     external_ids,
                     session
                 )
-                print("ids_by_external_ids:", ids_by_external_ids)
                 output = []
 
                 for propertyListing in property_listings:
@@ -39,16 +41,14 @@ class FusionOper(Operation):
                         output.append((residence_id, self.property_listing_to_update_residence(propertyListing)))
                     else:
                         output.append((None, self.property_listing_to_create_residence(propertyListing)))
-                
+
                 self.set_context_value("rooms_numbers_by_external_ids", rooms_numbers_by_external_ids)
-                
-                print("rooms_numbers_by_external_ids:", rooms_numbers_by_external_ids)
-                print("property_listings:", property_listings)
-                print("residence:", output)
+
+                logger.debug(f"Fused {len(output)} property listings ({len(ids_by_external_ids)} matched to existing residences)")
 
                 return output
             except Exception as e:
-                print(f"error: {str(e)}")
+                logger.error(f"Error in Fusion Operation: {str(e)}")
                 raise
 
     def property_listing_to_create_residence(self, property_listing: PropertyListing) -> ResidenceCreate:

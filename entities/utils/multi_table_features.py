@@ -1,4 +1,5 @@
-from fastapi import status 
+import logging
+from fastapi import status
 from typing import List, Type, Dict, Any, Optional
 from sqlalchemy.sql import Select, ColumnElement
 from sqlalchemy.orm import class_mapper
@@ -7,6 +8,8 @@ from fastapi import HTTPException
 import re
 from entities.utils.single_table_features import SingleTableFeatures
 from entities.abstracts.expanded_entity_repository import RelationshipConfig, RelationshipType
+
+logger = logging.getLogger(__name__)
 
 class MultiTableFeatures:
     def __init__(
@@ -44,7 +47,6 @@ class MultiTableFeatures:
 
         model = self.main_model
         model_name = model.__name__
-        print(f"==={model_name}===")
 
         try:
             mapper = class_mapper(model)
@@ -54,8 +56,8 @@ class MultiTableFeatures:
 
                 if short_field_name in self.field_to_column_map:
                     if short_field_name not in short_name_collisions:
-                        print(
-                            f"Warning: Field name '{short_field_name}' is ambiguous. "
+                        logger.warning(
+                            f"Field name '{short_field_name}' is ambiguous. "
                             f"Use qualified name (e.g., {qualified_field_name})."
                         )
                         del self.field_to_column_map[short_field_name]
@@ -66,15 +68,14 @@ class MultiTableFeatures:
                     self.field_to_model_map[short_field_name] = model
 
         except Exception as e:
-            print(f"Error inspecting model {model_name}: {e}")
+            logger.error(f"Error inspecting model {model_name}: {e}")
 
         for rel in self.relationships:
             if rel.relationship_type == RelationshipType.ONE_TO_MANY:
                 continue
-                
+
             model = rel.model
             model_name = model.__name__
-            print(f"==={model_name} ({rel.relationship_field})===")
 
             try:
                 mapper = class_mapper(model)
@@ -96,8 +97,8 @@ class MultiTableFeatures:
                     if rel.relationship_type == RelationshipType.ONE_TO_ONE:
                         if short_field_name in self.field_to_column_map:
                             if short_field_name not in short_name_collisions:
-                                print(
-                                    f"Warning: Field name '{short_field_name}' is ambiguous. "
+                                logger.warning(
+                                    f"Field name '{short_field_name}' is ambiguous. "
                                     f"Use qualified name (e.g., {qualified_field_name})."
                                 )
                                 del self.field_to_column_map[short_field_name]
@@ -108,15 +109,13 @@ class MultiTableFeatures:
                             self.field_to_model_map[short_field_name] = model
 
             except Exception as e:
-                print(f"Error inspecting model {model_name} ({rel.relationship_field}): {e}")
+                logger.error(f"Error inspecting model {model_name} ({rel.relationship_field}): {e}")
 
     def _get_column(self, field_name: str) -> Optional[ColumnElement]:
         column = self.field_to_column_map.get(field_name)
         if isinstance(column, ColumnElement):
             return column
 
-        print(f"Field '{field_name}' is not a valid SQLAlchemy column.")
-        
         available_fields = list(self.field_to_column_map.keys())
         similar_fields = [f for f in available_fields if field_name.lower() in f.lower()]
         error_msg = f"Field '{field_name}' not valid column."
@@ -129,7 +128,7 @@ class MultiTableFeatures:
     def _find_model_for_field(self, field_name: str) -> Optional[Type]:
         model = self.field_to_model_map.get(field_name)
         if model is None:
-            print(f"Warning: Could not find a model for field '{field_name}'.")
+            logger.warning(f"Could not find a model for field '{field_name}'.")
         return model
         
     def fields_selection(self) -> "MultiTableFeatures":

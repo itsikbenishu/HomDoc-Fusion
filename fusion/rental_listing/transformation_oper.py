@@ -1,6 +1,9 @@
+import logging
 from pydantic import ValidationError
 from pipeline.operation import Operation
 from fusion.rental_listing.transformation import property_listing_transform
+
+logger = logging.getLogger(__name__)
 
 class TransformationOper(Operation):
     def __init__(self):
@@ -40,9 +43,9 @@ class TransformationOper(Operation):
                     "error": str(e)  
                 })
 
-        print(f"validated: {len(validated_listings)} listings")
-        print(f"error: {len(errors)} errors")
-        print(errors)
+        logger.info(f"validated: {len(validated_listings)} listings")
+        if errors:
+            logger.warning(f"{len(errors)} errors: {errors}")
 
         output = validated_listings
 

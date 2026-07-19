@@ -1,4 +1,5 @@
-from fastapi import status 
+import logging
+from fastapi import status
 from typing import Dict, Any, Optional, Type, List
 from sqlmodel import select
 from sqlalchemy import desc, asc
@@ -8,6 +9,8 @@ from dateutil.parser import parse
 from fastapi import HTTPException
 import re
 from entities.utils.filter_operations import FilterOperators
+
+logger = logging.getLogger(__name__)
 
 
 class SingleTableFeatures:
@@ -73,7 +76,7 @@ class SingleTableFeatures:
                 return parse(value)
             return value
         except Exception as e:
-            print(f"Warning: failed to convert '{value}' for column {column} - {e}")
+            logger.warning(f"Failed to convert '{value}' for column {column} - {e}")
             return value
 
     def fields_selection(self) -> "SingleTableFeatures":

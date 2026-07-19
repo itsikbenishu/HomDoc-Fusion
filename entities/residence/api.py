@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query, Body, Request, Depends, status, HTTPException
 from sqlmodel import Session
+from starlette.concurrency import run_in_threadpool
 from typing import Optional, List
 from db.session import get_session
 from entities.abstracts.response_model import ResponseModel
@@ -66,7 +67,7 @@ async def get_residence(
         if tz:
             query_dict.setdefault("tz", tz)
 
-        data = get_residence_srv().get(session, query_dict)
+        data = await run_in_threadpool(get_residence_srv().get, session, query_dict)
         return ResponseModel(
             message="Residences fetched successfully",
             data=data,
@@ -87,7 +88,7 @@ async def create_residence(
     session: Session = Depends(get_session)
 ):
     try:
-        data = get_residence_srv().create(residence, session)
+        data = await run_in_threadpool(get_residence_srv().create, residence, session)
         return ResponseModel(
             message="Residence created successfully",
             data=data,
@@ -107,7 +108,7 @@ async def get_residence_by_id(
     session: Session = Depends(get_session)
 ):
     try:
-        data = get_residence_srv().get_by_id(residence_id, session)
+        data = await run_in_threadpool(get_residence_srv().get_by_id, residence_id, session)
         if not data:
             raise HTTPException(status_code=404, detail="Residence not found")
         return ResponseModel(
@@ -128,7 +129,7 @@ async def update_residence(
     session: Session = Depends(get_session)
 ):
     try:
-        data = get_residence_srv().update(residence_id, residence, session)
+        data = await run_in_threadpool(get_residence_srv().update, residence_id, residence, session)
         return ResponseModel(
             message="Residence updated successfully",
             data=data,
@@ -148,7 +149,7 @@ async def delete_residence(
     session: Session = Depends(get_session)
 ):
     try:
-        get_residence_srv().delete(residence_id, session)
+        await run_in_threadpool(get_residence_srv().delete, residence_id, session)
         return ResponseModel(
             message="Residence deleted successfully",
             data=None,

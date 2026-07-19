@@ -1,3 +1,4 @@
+import logging
 import requests
 import json
 from datetime import datetime, date
@@ -6,6 +7,8 @@ from dateutil.relativedelta import relativedelta
 from pipeline.operation import Operation
 from db.constants import select, update_row_by_id
 from fusion.rental_listing.api_config import api_settings
+
+logger = logging.getLogger(__name__)
 
 class FetchOper(Operation):
     def __init__(self, property_type):
@@ -18,8 +21,7 @@ class FetchOper(Operation):
         res_select = select("SELECT * FROM rentcast_stats WHERE id = %s", (1,))
         rentcast_stats = res_select
 
-        print("current rentcast_stats:")
-        print(rentcast_stats)
+        logger.debug(f"current rentcast_stats: {rentcast_stats}")
         limit = rentcast_stats["limit_value"]
         offset = rentcast_stats["offset_value"]
 
@@ -41,8 +43,7 @@ class FetchOper(Operation):
             update_row_by_id("rentcast_stats", rentcast_stats, 1)
             output = response.json()
 
-        print("new rentcast_stats:")
-        print(rentcast_stats)
+        logger.debug(f"new rentcast_stats: {rentcast_stats}")
         return output
 
     def _fetch(self, property_type, limit, offset): 
