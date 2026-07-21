@@ -1,4 +1,5 @@
 import logging
+import time
 from fastapi import FastAPI, Request, APIRouter, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,6 +47,14 @@ app.add_middleware(
 app.add_exception_handler(Exception, global_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
+@app.middleware("http")
+async def log_request_duration(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration = time.perf_counter() - start
+    logger.info(f"{request.method} {request.url.path} took {duration:.2f}s (status {response.status_code})")
+    return response
 
 api_router_fusion = APIRouter(
     tags=["HomeDocsFusion"]

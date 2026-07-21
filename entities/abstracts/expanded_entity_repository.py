@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any, TypeVar, Generic, Type, Set
 from sqlmodel import Session, SQLModel, select, and_
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import joinedload, selectinload, aliased
+from sqlalchemy.orm import joinedload, selectinload, aliased, contains_eager
 from sqlalchemy.sql.selectable import Select
 from collections import defaultdict
 from entities.abstracts.repository import Repository
@@ -69,6 +69,11 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
 
             if rel_config.join_for_filter_or_sort and alias_instance:
                 query = query.join(field.of_type(alias_instance), isouter=True)
+
+                if rel_config.load_strategy == LoadStrategy.JOINED:
+                    query = query.options(contains_eager(field.of_type(alias_instance)))
+                elif rel_config.load_strategy == LoadStrategy.SELECT_IN:
+                    query = query.options(selectinload(field.of_type(alias_instance)))
             elif rel_config.join_for_filter_or_sort and not alias_instance:
                 query = query.join(field, isouter=True)
                 
@@ -225,7 +230,6 @@ class ExpandedEntityRepository(Repository, Generic[PrimaryModelType], ABC):
                 if field_name in related_model_class.model_fields and field_name not in excluded_fields
             })
             session.add(new_instance)
-            session.flush()
             setattr(primary_instance, relationship_field, new_instance)
 
     @abstractmethod

@@ -148,22 +148,17 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
                                                      data.get('listing_history', []),
                                                      excluded_fields=['id', 'residence_id'])
         
+        home_doc.specs = specs
+        home_doc.dimensions = dimensions
+        home_doc.listing = listings
+        home_doc.listing_history = listings_history
         session.add(home_doc)
-        session.flush()  
-        specs.home_doc_id = home_doc.id
-        dimensions.home_doc_id = home_doc.id
-        listings.residence_id = home_doc.id
-        for listing_history in listings_history:
-            listing_history.residence_id = home_doc.id
 
-        session.add(specs)
-        session.add(dimensions)
-        session.add(listings)
-        session.add_all(listings_history)
         if auto_commit:
             session.commit()
-        else:
+        elif reload:
             session.flush()
+        # else (auto_commit=False, reload=False — batch mode): defer sync to the caller
         return self.get_by_id(home_doc.id, session) if reload else home_doc
 
     def update(
@@ -214,8 +209,7 @@ class ResidenceRepository(ExpandedEntityRepository[HomeDoc]):
         try:
             if auto_commit:
                 session.commit()
-            else:
-                session.flush()
+            # else (auto_commit=False — batch mode): defer sync to the caller
         except IntegrityError as e:
             if "unique_listing_entry" in str(e):
                 session.rollback()
