@@ -1,4 +1,4 @@
-# Fusion HomeDoc API
+# HomeDoc Fusion API
 
 A FastAPI + SQLModel backend that models real-estate entities ("HomeDocs" — properties, floors, apartments, rooms) as a self-referential hierarchy, exposes generic filterable/sortable REST APIs over them, and runs an ETL pipeline that ingests rental listings from an external API, matches them against existing records, and writes them back through a batched, transactional pipeline.
 
